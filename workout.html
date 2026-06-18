@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12-Week Workout Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#f5f7fa;color:#0f172a;min-height:100vh;padding-bottom:60px}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal{background:#fff;border-radius:20px;padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.hidden{display:none}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em}
+.ex-card{background:#f8f9fc;border-radius:12px;padding:14px 16px;margin-bottom:10px;border-left:4px solid #e2e8f0}
+.yt-btn{display:inline-flex;align-items:center;gap:6px;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:700;padding:6px 14px;border-radius:8px;text-decoration:none;margin-top:8px;border:1px solid #fecaca}
+.yt-btn:hover{background:#fecaca}
+.week-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.day-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1.5px solid #e2e8f0;cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.day-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.day-card.rest{opacity:.6;cursor:default}
+.day-card.rest:hover{transform:none;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.scan-badge{background:#fffbeb;color:#d97706;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #fde68a;margin-left:6px}
+.phase-header{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:16px}
+.steps-bar{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-top:8px;font-size:13px;color:#16a34a;font-weight:600}
+</style>
+</head>
+<body>
+<nav style="background:#0f172a;padding:0 16px;display:flex;justify-content:center;gap:0;position:sticky;top:0;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.35)">
+  <a href="index.html" id="nav-dashboard" style="display:flex;align-items:center;gap:6px;padding:14px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none;border-bottom:3px solid transparent;transition:all .18s">🏆 Dashboard</a>
+  <a href="workout.html" id="nav-workout" style="display:flex;align-items:center;gap:6px;padding:14px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none;border-bottom:3px solid transparent;transition:all .18s">🗓️ Workout</a>
+  <a href="nutrition.html" id="nav-nutrition" style="display:flex;align-items:center;gap:6px;padding:14px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none;border-bottom:3px solid transparent;transition:all .18s">🍽️ Nutrition</a>
+</nav>
+<script>
+(function(){
+  var path = window.location.pathname;
+  var active = path.includes('workout') ? 'nav-workout' : path.includes('nutrition') ? 'nav-nutrition' : 'nav-dashboard';
+  var links = document.querySelectorAll('nav a');
+  links.forEach(function(a){
+    if(a.id === active){
+      a.style.color = '#fff';
+      a.style.borderBottomColor = '#dc2626';
+    } else {
+      a.style.color = 'rgba(255,255,255,.45)';
+    }
+  });
+})();
+</script>
+
+<!-- HEADER -->
+<header style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#7f1d1d 100%);padding:36px 16px 32px;text-align:center">
+  <div style="font-size:11px;letter-spacing:.2em;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;margin-bottom:10px">12-Week Body Transformation</div>
+  <h1 style="font-size:clamp(26px,6vw,46px);font-weight:900;color:#fff;letter-spacing:-.02em;line-height:1.05">WORKOUT CALENDAR</h1>
+  <p style="color:rgba(255,255,255,.55);margin-top:8px;font-size:13px">16 Jun → 8 Sep 2025 · 5 days/week · No equipment needed</p>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px">
+    <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 16px;font-size:12px;color:rgba(255,255,255,.8);font-weight:600">🚶 10,000 Steps Daily</div>
+    <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 16px;font-size:12px;color:rgba(255,255,255,.8);font-weight:600">💪 Beginner Friendly</div>
+    <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 16px;font-size:12px;color:rgba(255,255,255,.8);font-weight:600">🏠 Anywhere</div>
+  </div>
+</header>
+
+<!-- LEGEND -->
+<div style="max-width:860px;margin:20px auto 0;padding:0 16px">
+  <div style="background:#fff;border-radius:14px;padding:14px 18px;border:1px solid #e2e8f0;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-right:4px">Key:</span>
+    <span class="tag" style="background:#fef2f2;color:#dc2626">🔴 Upper Body</span>
+    <span class="tag" style="background:#eff6ff;color:#1d4ed8">🔵 Lower Body</span>
+    <span class="tag" style="background:#fffbeb;color:#d97706">🟡 Cardio</span>
+    <span class="tag" style="background:#f0fdf4;color:#16a34a">🟢 Core</span>
+    <span class="tag" style="background:#faf5ff;color:#7c3aed">🟣 Full Body</span>
+    <span class="tag" style="background:#f1f5f9;color:#64748b">⚪ Rest</span>
+    <span class="tag" style="background:#fffbeb;color:#d97706;border:1px solid #fde68a">📏 Scan Week</span>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<div style="max-width:860px;margin:20px auto 0;padding:0 16px" id="calendar"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay hidden" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+const START = new Date("2025-06-16");
+const SCAN_WEEKS = [2,4,6,8,10,12];
+
+// Color per type
+const TYPE_STYLE = {
+  upper:   {bg:"#fef2f2", color:"#dc2626", border:"#fecaca", emoji:"🔴", label:"Upper Body"},
+  lower:   {bg:"#eff6ff", color:"#1d4ed8", border:"#bfdbfe", emoji:"🔵", label:"Lower Body"},
+  cardio:  {bg:"#fffbeb", color:"#d97706", border:"#fde68a", emoji:"🟡", label:"Cardio Day"},
+  core:    {bg:"#f0fdf4", color:"#16a34a", border:"#bbf7d0", emoji:"🟢", label:"Core"},
+  full:    {bg:"#faf5ff", color:"#7c3aed", border:"#e9d5ff", emoji:"🟣", label:"Full Body"},
+  rest:    {bg:"#f8fafc", color:"#94a3b8", border:"#e2e8f0", emoji:"⚪", label:"Rest Day"},
+};
+
+// Phase info
+const PHASES = [
+  {weeks:[1,2,3,4], label:"Phase 1 · Weeks 1–4", sub:"Build the habit · 20–25 min sessions · Learn movements", color:"#1e3a8a"},
+  {weeks:[5,6,7,8], label:"Phase 2 · Weeks 5–8", sub:"Get consistent · 25–30 min · More reps, harder moves", color:"#7c2d12"},
+  {weeks:[9,10,11,12], label:"Phase 3 · Weeks 9–12", sub:"Push for results · 30–35 min · Max effort", color:"#14532d"},
+];
+
+// All exercises per day type and phase
+const WORKOUTS = {
+  upper: {
+    1: {
+      title:"Upper Body — Wall Push-ups & Shoulders",
+      exercises:[
+        {name:"Wall Push-ups", sets:"3 sets × 8 reps", tip:"Stand arm's length from wall. Slow and controlled.", yt:"https://www.youtube.com/results?search_query=wall+push+ups+beginner"},
+        {name:"Arm Circles", sets:"2 sets × 20 reps (each direction)", tip:"Big slow circles to warm up shoulders.", yt:"https://www.youtube.com/results?search_query=arm+circles+exercise"},
+        {name:"Shoulder Taps (on knees)", sets:"3 sets × 10 taps each side", tip:"On hands and knees, tap opposite shoulder.", yt:"https://www.youtube.com/results?search_query=shoulder+taps+beginner+exercise"},
+        {name:"Side Arm Raises", sets:"3 sets × 12 reps", tip:"Arms out to side, slow and controlled.", yt:"https://www.youtube.com/results?search_query=side+lateral+raise+no+weights"},
+      ]
+    },
+    2: {
+      title:"Upper Body — Incline & Strength",
+      exercises:[
+        {name:"Incline Push-ups (on table/sofa)", sets:"3 sets × 10 reps", tip:"Hands on elevated surface, easier than floor.", yt:"https://www.youtube.com/results?search_query=incline+push+ups+beginner"},
+        {name:"Tricep Dips (on chair edge)", sets:"3 sets × 8 reps", tip:"Sit on edge of chair, dip down and push up.", yt:"https://www.youtube.com/results?search_query=chair+tricep+dips+beginner"},
+        {name:"Superman Hold", sets:"3 sets × 10 reps", tip:"Lie face down, lift arms and chest. Great for back.", yt:"https://www.youtube.com/results?search_query=superman+exercise+beginner"},
+        {name:"Shoulder Taps (full plank)", sets:"3 sets × 12 each side", tip:"Full plank position now, keep hips stable.", yt:"https://www.youtube.com/results?search_query=plank+shoulder+taps"},
+      ]
+    },
+    3: {
+      title:"Upper Body — Push & Pull",
+      exercises:[
+        {name:"Knee Push-ups", sets:"4 sets × 12 reps", tip:"Full range of motion, chest nearly touches floor.", yt:"https://www.youtube.com/results?search_query=knee+push+ups+proper+form"},
+        {name:"Pike Push-ups", sets:"3 sets × 8 reps", tip:"Hips high, lower head between hands — shoulder focused.", yt:"https://www.youtube.com/results?search_query=pike+push+ups+beginner"},
+        {name:"Superman Pulses", sets:"3 sets × 15 reps", tip:"Small pulses at the top, squeeze back.", yt:"https://www.youtube.com/results?search_query=superman+pulses+exercise"},
+        {name:"Plank Hold", sets:"3 sets × 30 sec", tip:"Keep body straight, breathe steadily.", yt:"https://www.youtube.com/results?search_query=plank+hold+beginner"},
+      ]
+    }
+  },
+  lower: {
+    1: {
+      title:"Lower Body — Chair Squats & Basics",
+      exercises:[
+        {name:"Chair Squats", sets:"3 sets × 10 reps", tip:"Sit down slowly onto chair then stand up. Use chair as guide.", yt:"https://www.youtube.com/results?search_query=chair+squat+beginner"},
+        {name:"Standing Lunges", sets:"3 sets × 8 each leg", tip:"Step forward, lower back knee toward floor gently.", yt:"https://www.youtube.com/results?search_query=standing+lunges+beginner"},
+        {name:"Calf Raises", sets:"3 sets × 15 reps", tip:"Rise on tiptoes, slow down. Hold wall for balance.", yt:"https://www.youtube.com/results?search_query=calf+raises+bodyweight"},
+        {name:"Glute Bridge", sets:"3 sets × 12 reps", tip:"Lie on back, push hips up. Squeeze glutes at top.", yt:"https://www.youtube.com/results?search_query=glute+bridge+beginner"},
+      ]
+    },
+    2: {
+      title:"Lower Body — Squats & Glutes",
+      exercises:[
+        {name:"Bodyweight Squats", sets:"3 sets × 15 reps", tip:"Full squat now — thighs parallel to floor.", yt:"https://www.youtube.com/results?search_query=bodyweight+squat+form"},
+        {name:"Reverse Lunges", sets:"3 sets × 10 each leg", tip:"Step back instead of forward — easier on knees.", yt:"https://www.youtube.com/results?search_query=reverse+lunge+beginner"},
+        {name:"Sumo Squat", sets:"3 sets × 12 reps", tip:"Wide stance, toes out — targets inner thighs.", yt:"https://www.youtube.com/results?search_query=sumo+squat+bodyweight"},
+        {name:"Single Leg Glute Bridge", sets:"3 sets × 10 each leg", tip:"One leg raised, push hips up with other leg.", yt:"https://www.youtube.com/results?search_query=single+leg+glute+bridge"},
+      ]
+    },
+    3: {
+      title:"Lower Body — Power & Endurance",
+      exercises:[
+        {name:"Jump Squats (or fast squats)", sets:"4 sets × 12 reps", tip:"Jump if comfortable, or just do fast squats.", yt:"https://www.youtube.com/results?search_query=jump+squats+beginner"},
+        {name:"Walking Lunges", sets:"3 sets × 10 each leg", tip:"Continuous movement forward — 10 steps each leg.", yt:"https://www.youtube.com/results?search_query=walking+lunges+form"},
+        {name:"Wall Sit", sets:"3 sets × 30 sec", tip:"Back flat on wall, thighs parallel to floor. Hold!", yt:"https://www.youtube.com/results?search_query=wall+sit+exercise"},
+        {name:"Donkey Kicks", sets:"3 sets × 15 each leg", tip:"On hands and knees, kick leg back and up.", yt:"https://www.youtube.com/results?search_query=donkey+kicks+exercise"},
+      ]
+    }
+  },
+  cardio: {
+    1: {
+      title:"Cardio Day — Low Impact",
+      exercises:[
+        {name:"Brisk Walk (outside or in place)", sets:"20 minutes continuous", tip:"Fast enough that talking is slightly hard.", yt:"https://www.youtube.com/results?search_query=brisk+walking+workout+beginner"},
+        {name:"Step Touch Side to Side", sets:"3 sets × 1 minute", tip:"Step right, touch, step left, touch. Keep moving.", yt:"https://www.youtube.com/results?search_query=step+touch+cardio+beginner"},
+        {name:"Low Impact Jumping Jacks", sets:"3 sets × 20 reps", tip:"Step out instead of jump — same benefit, less impact.", yt:"https://www.youtube.com/results?search_query=low+impact+jumping+jacks"},
+        {name:"March in Place", sets:"5 minutes", tip:"High knees marching on the spot to cool down.", yt:"https://www.youtube.com/results?search_query=marching+in+place+exercise"},
+      ]
+    },
+    2: {
+      title:"Cardio Day — Moderate HIIT",
+      exercises:[
+        {name:"Warm-up Walk", sets:"5 minutes", tip:"Start slow, build up pace.", yt:"https://www.youtube.com/results?search_query=cardio+warm+up+beginner"},
+        {name:"High Knees (30 sec on / 15 sec rest)", sets:"6 rounds", tip:"Drive knees up to hip height, pump arms.", yt:"https://www.youtube.com/results?search_query=high+knees+exercise"},
+        {name:"Jumping Jacks", sets:"4 sets × 30 seconds", tip:"Full jumping jacks now — go at your own pace.", yt:"https://www.youtube.com/results?search_query=jumping+jacks+workout"},
+        {name:"Jog in Place", sets:"5 minutes continuous", tip:"Stay light on feet, breathe through nose.", yt:"https://www.youtube.com/results?search_query=jogging+in+place+workout"},
+      ]
+    },
+    3: {
+      title:"Cardio Day — Full HIIT",
+      exercises:[
+        {name:"Burpees (modified)", sets:"4 sets × 8 reps", tip:"Step back instead of jump for lower impact.", yt:"https://www.youtube.com/results?search_query=modified+burpees+beginner"},
+        {name:"High Knees Sprint", sets:"8 rounds × 30 sec on / 15 sec rest", tip:"Go as fast as possible each round.", yt:"https://www.youtube.com/results?search_query=high+knees+hiit"},
+        {name:"Jump Rope (or fake jump rope)", sets:"3 sets × 1 minute", tip:"No rope needed — just jump and flick wrists.", yt:"https://www.youtube.com/results?search_query=jump+rope+without+rope+exercise"},
+        {name:"Cool Down Walk", sets:"5 minutes", tip:"Slow down heart rate before stretching.", yt:"https://www.youtube.com/results?search_query=cardio+cool+down+stretch"},
+      ]
+    }
+  },
+  core: {
+    1: {
+      title:"Core — Beginner Abs",
+      exercises:[
+        {name:"Seated Crunches", sets:"3 sets × 10 reps", tip:"Sit on edge of chair, lean back slightly and crunch.", yt:"https://www.youtube.com/results?search_query=seated+crunches+chair"},
+        {name:"Lying Knee Tucks", sets:"3 sets × 10 reps", tip:"Lie on back, pull both knees to chest.", yt:"https://www.youtube.com/results?search_query=lying+knee+tucks+exercise"},
+        {name:"Dead Bug", sets:"3 sets × 8 each side", tip:"Lie on back, lower opposite arm & leg slowly.", yt:"https://www.youtube.com/results?search_query=dead+bug+exercise+beginner"},
+        {name:"Cat-Cow Stretch", sets:"2 sets × 10 reps", tip:"On all fours — arch up and down slowly.", yt:"https://www.youtube.com/results?search_query=cat+cow+stretch"},
+      ]
+    },
+    2: {
+      title:"Core — Getting Stronger",
+      exercises:[
+        {name:"Crunches (floor)", sets:"3 sets × 15 reps", tip:"Hands behind head, lift shoulders only.", yt:"https://www.youtube.com/results?search_query=crunches+proper+form"},
+        {name:"Leg Raises", sets:"3 sets × 10 reps", tip:"Lie flat, lift straight legs to 90°, lower slowly.", yt:"https://www.youtube.com/results?search_query=leg+raises+beginner"},
+        {name:"Plank Hold", sets:"3 sets × 20–30 sec", tip:"On elbows or hands, keep body in straight line.", yt:"https://www.youtube.com/results?search_query=plank+exercise+beginner"},
+        {name:"Russian Twists (no weight)", sets:"3 sets × 20 reps", tip:"Sit with feet up, rotate side to side.", yt:"https://www.youtube.com/results?search_query=russian+twists+no+weight"},
+      ]
+    },
+    3: {
+      title:"Core — Burn It Out",
+      exercises:[
+        {name:"Bicycle Crunches", sets:"4 sets × 20 reps", tip:"Elbow to opposite knee, slow and controlled.", yt:"https://www.youtube.com/results?search_query=bicycle+crunches+proper+form"},
+        {name:"Plank with Hip Dips", sets:"3 sets × 15 each side", tip:"From plank, dip hips side to side.", yt:"https://www.youtube.com/results?search_query=plank+hip+dips"},
+        {name:"Mountain Climbers", sets:"4 sets × 20 reps", tip:"In plank, drive knees to chest alternating fast.", yt:"https://www.youtube.com/results?search_query=mountain+climbers+exercise"},
+        {name:"V-Sit Hold", sets:"3 sets × 20 sec", tip:"Sit, lift legs and torso to form V shape. Hold.", yt:"https://www.youtube.com/results?search_query=v+sit+exercise+beginner"},
+      ]
+    }
+  },
+  full: {
+    1: {
+      title:"Full Body Circuit — Easy Flow",
+      exercises:[
+        {name:"Wall Push-ups", sets:"2 sets × 8 reps", tip:"Warm up the upper body.", yt:"https://www.youtube.com/results?search_query=wall+push+ups+beginner"},
+        {name:"Chair Squats", sets:"2 sets × 10 reps", tip:"Slow and controlled.", yt:"https://www.youtube.com/results?search_query=chair+squat+beginner"},
+        {name:"March in Place", sets:"2 minutes", tip:"Keep heart rate moderate.", yt:"https://www.youtube.com/results?search_query=marching+in+place+exercise"},
+        {name:"Glute Bridge", sets:"2 sets × 10 reps", tip:"Squeeze at the top.", yt:"https://www.youtube.com/results?search_query=glute+bridge+beginner"},
+        {name:"Dead Bug", sets:"2 sets × 6 each side", tip:"Slow and controlled core work.", yt:"https://www.youtube.com/results?search_query=dead+bug+exercise+beginner"},
+      ]
+    },
+    2: {
+      title:"Full Body Circuit — Build Up",
+      exercises:[
+        {name:"Incline Push-ups", sets:"3 sets × 10 reps", tip:"Use sofa or table edge.", yt:"https://www.youtube.com/results?search_query=incline+push+ups+beginner"},
+        {name:"Bodyweight Squats", sets:"3 sets × 12 reps", tip:"Full depth, chest up.", yt:"https://www.youtube.com/results?search_query=bodyweight+squat+form"},
+        {name:"High Knees", sets:"3 sets × 30 seconds", tip:"Drive knees up, pump arms.", yt:"https://www.youtube.com/results?search_query=high+knees+exercise"},
+        {name:"Reverse Lunges", sets:"3 sets × 8 each leg", tip:"Step back, knee nearly touches floor.", yt:"https://www.youtube.com/results?search_query=reverse+lunge+beginner"},
+        {name:"Plank Hold", sets:"3 sets × 25 sec", tip:"Keep hips level.", yt:"https://www.youtube.com/results?search_query=plank+exercise+beginner"},
+      ]
+    },
+    3: {
+      title:"Full Body Circuit — Max Effort",
+      exercises:[
+        {name:"Knee Push-ups", sets:"4 sets × 12 reps", tip:"Full range, go till failure if able.", yt:"https://www.youtube.com/results?search_query=knee+push+ups+proper+form"},
+        {name:"Jump Squats (or fast squats)", sets:"4 sets × 12 reps", tip:"Explode up or go as fast as possible.", yt:"https://www.youtube.com/results?search_query=jump+squats+beginner"},
+        {name:"Mountain Climbers", sets:"4 sets × 20 reps", tip:"Keep plank tight, fast legs.", yt:"https://www.youtube.com/results?search_query=mountain+climbers+exercise"},
+        {name:"Walking Lunges", sets:"3 sets × 10 each leg", tip:"Continuous, no stopping.", yt:"https://www.youtube.com/results?search_query=walking+lunges+form"},
+        {name:"Bicycle Crunches", sets:"3 sets × 20 reps", tip:"Slow and deliberate, feel the core.", yt:"https://www.youtube.com/results?search_query=bicycle+crunches+proper+form"},
+      ]
+    }
+  }
+};
+
+// Day pattern: Mon=upper, Tue=lower, Wed=cardio, Thu=core, Fri=full, Sat=rest, Sun=rest
+const DAY_TYPES = ["upper","lower","cardio","core","full","rest","rest"];
+const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+function getPhase(weekNum) {
+  if(weekNum <= 4) return 1;
+  if(weekNum <= 8) return 2;
+  return 3;
+}
+
+function getWorkout(type, phase) {
+  if(type === "rest") return null;
+  return WORKOUTS[type][phase];
+}
+
+function getDate(weekNum, dayOfWeek) {
+  const d = new Date(START);
+  d.setDate(d.getDate() + (weekNum-1)*7 + dayOfWeek);
+  return d;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+}
+
+function isScanWeek(w) { return SCAN_WEEKS.includes(w); }
+function isToday(d) {
+  const t = new Date();
+  return d.getDate()===t.getDate() && d.getMonth()===t.getMonth() && d.getFullYear()===t.getFullYear();
+}
+
+function openModal(weekNum, dayIdx) {
+  const type = DAY_TYPES[dayIdx];
+  if(type === "rest") return;
+  const phase = getPhase(weekNum);
+  const workout = getWorkout(type, phase);
+  const ts = TYPE_STYLE[type];
+  const d = getDate(weekNum, dayIdx);
+  const scan = isScanWeek(weekNum);
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Week ${weekNum} · ${DAY_NAMES[dayIdx]} ${formatDate(d)}</div>
+        <h3 style="font-size:18px;font-weight:800;color:#0f172a">${workout.title}</h3>
+      </div>
+      <button onclick="closeModal()" style="background:#f1f5f9;border:none;border-radius:10px;padding:6px 14px;cursor:pointer;font-weight:600;color:#64748b;flex-shrink:0;margin-left:12px">✕</button>
+    </div>`;
+
+  if(scan) {
+    html += `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#d97706;font-weight:600">📏 Scan Week — remember to do your InBody check-in this week!</div>`;
+  }
+
+  html += `<div class="steps-bar">🚶 Goal: 10,000 steps today on top of this workout</div>`;
+  html += `<div style="margin-top:16px;margin-bottom:10px;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em">Exercises</div>`;
+
+  workout.exercises.forEach((ex,i) => {
+    html += `
+      <div class="ex-card" style="border-left-color:${ts.color}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div style="font-weight:700;font-size:14px;color:#0f172a;margin-bottom:2px">${i+1}. ${ex.name}</div>
+            <div style="font-size:13px;color:#1d4ed8;font-weight:600;margin-bottom:4px">${ex.sets}</div>
+            <div style="font-size:12px;color:#64748b">💡 ${ex.tip}</div>
+          </div>
+        </div>
+        <a href="${ex.yt}" target="_blank" class="yt-btn">▶ Watch Demo</a>
+      </div>`;
+  });
+
+  html += `
+    <div style="margin-top:16px;background:#f8f9fc;border-radius:12px;padding:12px 16px;border:1px solid #e2e8f0">
+      <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Phase ${phase} Tips</div>
+      <div style="font-size:13px;color:#475569">${phase===1?"Focus on form, not speed. Take rest when needed. Every rep counts.":phase===2?"Push a little harder each week. Rest 45 sec between sets.":"Go for it — this is your final push. Minimal rest, max effort."}</div>
+    </div>`;
+
+  document.getElementById("modal-content").innerHTML = html;
+  document.getElementById("modal-overlay").classList.remove("hidden");
+}
+
+function closeModal(e) {
+  if(!e || e.target === document.getElementById("modal-overlay")) {
+    document.getElementById("modal-overlay").classList.add("hidden");
+  }
+}
+
+// BUILD CALENDAR
+function buildCalendar() {
+  const cal = document.getElementById("calendar");
+  let currentPhase = 0;
+  let html = "";
+
+  for(let w=1; w<=12; w++) {
+    const phase = getPhase(w);
+    const phaseInfo = PHASES[phase-1];
+
+    // Phase header
+    if(phase !== currentPhase) {
+      currentPhase = phase;
+      const pColor = phase===1?"#1e3a8a":phase===2?"#7c2d12":"#14532d";
+      html += `
+        <div style="background:linear-gradient(135deg,${pColor},${phase===1?"#1e40af":phase===2?"#991b1b":"#166534"});color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:12px;margin-top:${phase>1?'28px':'0'}">
+          <div style="font-size:13px;font-weight:900">${phaseInfo.label}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px">${phaseInfo.sub}</div>
+        </div>`;
+    }
+
+    const scanBadge = isScanWeek(w) ? `<span class="scan-badge">📏 Scan Week</span>` : "";
+    html += `<div class="week-label" style="margin-top:16px">WEEK ${w} ${scanBadge}</div>`;
+    html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:4px">`;
+
+    for(let d=0; d<7; d++) {
+      const type = DAY_TYPES[d];
+      const ts = TYPE_STYLE[type];
+      const date = getDate(w, d);
+      const today = isToday(date);
+      const isRest = type === "rest";
+
+      html += `
+        <div class="day-card ${isRest?'rest':''}"
+          onclick="${!isRest?`openModal(${w},${d})`:'void(0)'}"
+          style="background:${ts.bg};border-color:${today?'#0f172a':ts.border};${today?'box-shadow:0 0 0 2px #0f172a;':''}">
+          <div style="font-size:9px;font-weight:700;color:${ts.color};margin-bottom:2px">${DAY_NAMES[d]}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px">${formatDate(date)}</div>
+          <div style="font-size:14px">${ts.emoji}</div>
+          <div style="font-size:9px;font-weight:600;color:${ts.color};margin-top:3px;line-height:1.2">${ts.label}</div>
+          ${today?`<div style="font-size:8px;background:#0f172a;color:#fff;border-radius:4px;padding:1px 4px;margin-top:3px;font-weight:700">TODAY</div>`:''}
+        </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Steps reminder
+  html += `
+    <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);border-radius:14px;padding:20px;margin-top:28px;text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">🚶</div>
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px">10,000 Steps Every Single Day</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.6)">Including rest days. Track with your phone health app.</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px">
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:8px 16px;font-size:12px;color:rgba(255,255,255,.8)">📱 iPhone: Health App</div>
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:8px 16px;font-size:12px;color:rgba(255,255,255,.8)">📱 Android: Google Fit</div>
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:8px 16px;font-size:12px;color:rgba(255,255,255,.8)">⌚ Any step tracker</div>
+      </div>
+    </div>`;
+
+  cal.innerHTML = html;
+}
+
+buildCalendar();
+</script>
+</body>
+</html>

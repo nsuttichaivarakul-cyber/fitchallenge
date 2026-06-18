@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition Calculator · 12-Week Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#f5f7fa;color:#0f172a;min-height:100vh;padding-bottom:60px}
+.card{background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.input-wrap{position:relative}
+.input-wrap input{width:100%;background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;padding:16px 56px 16px 18px;font-size:22px;font-weight:800;color:#0f172a;outline:none;font-family:'Inter',sans-serif;transition:border-color .2s}
+.input-wrap input:focus{border-color:#1d4ed8;background:#fff}
+.input-wrap .unit{position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:700;color:#94a3b8}
+.result-hidden{display:none}
+.macro-bar-track{height:10px;border-radius:99px;overflow:hidden;background:#e2e8f0;margin-top:6px}
+.macro-fill{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.rule-card{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#f8f9fc;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:10px}
+.rule-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;background:linear-gradient(135deg,#dc2626,#1d4ed8)}
+.range-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:99px;background:#e2e8f0;outline:none;cursor:pointer;margin-top:16px}
+.range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#dc2626,#1d4ed8);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+</style>
+</head>
+<body>
+<nav style="background:#0f172a;padding:0 16px;display:flex;justify-content:center;gap:0;position:sticky;top:0;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.35)">
+  <a href="index.html" id="nav-dashboard" style="display:flex;align-items:center;gap:6px;padding:14px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none;border-bottom:3px solid transparent;transition:all .18s">🏆 Dashboard</a>
+  <a href="workout.html" id="nav-workout" style="display:flex;align-items:center;gap:6px;padding:14px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none;border-bottom:3px solid transparent;transition:all .18s">🗓️ Workout</a>
+  <a href="nutrition.html" id="nav-nutrition" style="display:flex;align-items:center;gap:6px;padding:14px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none;border-bottom:3px solid transparent;transition:all .18s">🍽️ Nutrition</a>
+</nav>
+<script>
+(function(){
+  var path = window.location.pathname;
+  var active = path.includes('workout') ? 'nav-workout' : path.includes('nutrition') ? 'nav-nutrition' : 'nav-dashboard';
+  var links = document.querySelectorAll('nav a');
+  links.forEach(function(a){
+    if(a.id === active){
+      a.style.color = '#fff';
+      a.style.borderBottomColor = '#dc2626';
+    } else {
+      a.style.color = 'rgba(255,255,255,.45)';
+    }
+  });
+})();
+</script>
+
+<header style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#7f1d1d 100%);padding:36px 16px 32px;text-align:center">
+  <div style="font-size:11px;letter-spacing:.2em;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;margin-bottom:10px">12-Week Challenge</div>
+  <h1 style="font-size:clamp(26px,6vw,46px);font-weight:900;color:#fff;letter-spacing:-.02em;line-height:1.05">NUTRITION GUIDE</h1>
+  <p style="color:rgba(255,255,255,.55);margin-top:8px;font-size:13px">Enter your weight → get your personal daily targets</p>
+</header>
+
+<div style="max-width:600px;margin:28px auto 0;padding:0 16px;display:flex;flex-direction:column;gap:20px">
+
+  <!-- WEIGHT INPUT -->
+  <div class="card">
+    <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Your Current Weight</div>
+    <div class="input-wrap">
+      <input type="number" id="weight-input" min="30" max="200" step="0.5" placeholder="e.g. 65" oninput="syncFromInput()">
+      <span class="unit">kg</span>
+    </div>
+    <input type="range" class="range-slider" id="weight-slider" min="40" max="120" step="0.5" value="65" oninput="syncFromSlider(this.value)">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:4px;font-weight:600">
+      <span>40 kg</span><span>80 kg</span><span>120 kg</span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results" class="result-hidden">
+
+    <!-- HOW CALORIES ARE CALCULATED -->
+    <div class="card" style="background:#fffbeb;border-color:#fde68a">
+      <div style="font-size:13px;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">📐 How Your Numbers Are Calculated</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#334155">
+        <div style="background:#fff;border-radius:10px;padding:10px 14px;border:1px solid #fde68a">
+          <b>Maintenance calories</b> = Weight (kg) × 28<br>
+          <span style="color:#94a3b8;font-size:12px">Estimated calories your body needs to stay the same weight</span>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:10px 14px;border:1px solid #fde68a">
+          <b>Daily target</b> = Maintenance − 200 cal<br>
+          <span style="color:#94a3b8;font-size:12px">A 200 cal deficit = safe, sustainable fat loss without losing muscle</span>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:10px 14px;border:1px solid #fde68a">
+          <b>Protein</b> = Weight (kg) × 1.6g<br>
+          <span style="color:#94a3b8;font-size:12px">The gold standard for preserving muscle while losing fat</span>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:10px 14px;border:1px solid #fde68a">
+          <b>Carbs & Fat</b> = remaining calories split 60% carbs / 40% fat<br>
+          <span style="color:#94a3b8;font-size:12px">After protein is set, remaining calories fill carbs and fat</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALORIE TARGETS -->
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px">Daily Calorie Target</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;text-align:center">
+          <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Maintenance</div>
+          <div id="cal-maintain" style="font-size:28px;font-weight:900;color:#334155"></div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px">cal / day</div>
+          <div style="font-size:11px;color:#64748b;margin-top:6px">Stay the same weight</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#fef2f2,#eff6ff);border:1.5px solid #1d4ed8;border-radius:14px;padding:16px;text-align:center;position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#dc2626,#1d4ed8)"></div>
+          <div style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">🎯 Your Target</div>
+          <div id="cal-target" style="font-size:28px;font-weight:900;color:#0f172a"></div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px">cal / day</div>
+          <div style="font-size:11px;color:#64748b;margin-top:6px">Lose fat + keep muscle</div>
+        </div>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#16a34a;font-weight:600;display:flex;gap:8px;align-items:center">
+        <span style="font-size:18px">💡</span>
+        <span>200 cal deficit daily = roughly <b>~0.8–1 kg of fat lost per month</b>. Slow, safe, and sustainable.</span>
+      </div>
+    </div>
+
+    <!-- MACROS -->
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Daily Macro Breakdown</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:18px">Protein is set first (1.6g × weight), remaining calories split into carbs & fat</div>
+
+      <!-- Protein -->
+      <div style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
+          <div>
+            <span style="font-size:14px;font-weight:800;color:#dc2626">🥩 Protein</span>
+            <span style="font-size:11px;color:#94a3b8;margin-left:6px">1.6g × weight · set first</span>
+          </div>
+          <div style="text-align:right">
+            <span id="p-g" style="font-size:20px;font-weight:900;color:#dc2626"></span>
+            <span style="font-size:12px;color:#94a3b8">g</span>
+            <span id="p-cal" style="font-size:11px;color:#94a3b8;margin-left:4px"></span>
+          </div>
+        </div>
+        <div class="macro-bar-track"><div id="p-bar" class="macro-fill" style="background:#dc2626"></div></div>
+      </div>
+
+      <!-- Carbs -->
+      <div style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
+          <div>
+            <span style="font-size:14px;font-weight:800;color:#1d4ed8">🍚 Carbs</span>
+            <span style="font-size:11px;color:#94a3b8;margin-left:6px">60% of remaining calories</span>
+          </div>
+          <div style="text-align:right">
+            <span id="c-g" style="font-size:20px;font-weight:900;color:#1d4ed8"></span>
+            <span style="font-size:12px;color:#94a3b8">g</span>
+            <span id="c-cal" style="font-size:11px;color:#94a3b8;margin-left:4px"></span>
+          </div>
+        </div>
+        <div class="macro-bar-track"><div id="c-bar" class="macro-fill" style="background:#1d4ed8"></div></div>
+      </div>
+
+      <!-- Fat -->
+      <div style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
+          <div>
+            <span style="font-size:14px;font-weight:800;color:#d97706">🥑 Fat</span>
+            <span style="font-size:11px;color:#94a3b8;margin-left:6px">40% of remaining calories</span>
+          </div>
+          <div style="text-align:right">
+            <span id="f-g" style="font-size:20px;font-weight:900;color:#d97706"></span>
+            <span style="font-size:12px;color:#94a3b8">g</span>
+            <span id="f-cal" style="font-size:11px;color:#94a3b8;margin-left:4px"></span>
+          </div>
+        </div>
+        <div class="macro-bar-track"><div id="f-bar" class="macro-fill" style="background:#d97706"></div></div>
+      </div>
+
+      <!-- Visual stacked bar -->
+      <div style="border-radius:99px;overflow:hidden;height:14px;display:flex;margin-top:4px">
+        <div id="vis-p" style="background:#dc2626;height:100%;transition:width .8s"></div>
+        <div id="vis-c" style="background:#1d4ed8;height:100%;transition:width .8s"></div>
+        <div id="vis-f" style="background:#d97706;height:100%;transition:width .8s"></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;font-weight:700;flex-wrap:wrap">
+        <span style="color:#dc2626">■ Protein</span>
+        <span style="color:#1d4ed8">■ Carbs</span>
+        <span style="color:#d97706">■ Fat</span>
+      </div>
+
+      <!-- Pct breakdown -->
+      <div id="pct-breakdown" style="margin-top:12px;background:#f8fafc;border-radius:10px;padding:10px 14px;font-size:12px;color:#64748b;border:1px solid #e2e8f0"></div>
+    </div>
+
+    <!-- PROTEIN SOURCES -->
+    <div class="card" style="background:linear-gradient(135deg,#fef2f2,#fff);border-color:#fecaca">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="font-size:32px">🥩</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.08em">Your Daily Protein Goal</div>
+          <div id="protein-rule" style="font-size:22px;font-weight:900;color:#dc2626;margin-top:2px"></div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px">grams per day · 1.6g × your weight</div>
+        </div>
+      </div>
+      <div style="margin-top:4px">
+        <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">Easy protein sources</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+          <div style="background:#fff;border:1px solid #fecaca;border-radius:10px;padding:10px 12px"><b>Egg</b><br><span style="color:#94a3b8;font-size:11px">1 egg = 6g protein</span></div>
+          <div style="background:#fff;border:1px solid #fecaca;border-radius:10px;padding:10px 12px"><b>Chicken breast</b><br><span style="color:#94a3b8;font-size:11px">100g = 31g protein</span></div>
+          <div style="background:#fff;border:1px solid #fecaca;border-radius:10px;padding:10px 12px"><b>Greek yogurt</b><br><span style="color:#94a3b8;font-size:11px">100g = 10g protein</span></div>
+          <div style="background:#fff;border:1px solid #fecaca;border-radius:10px;padding:10px 12px"><b>Tofu (firm)</b><br><span style="color:#94a3b8;font-size:11px">100g = 8g protein</span></div>
+          <div style="background:#fff;border:1px solid #fecaca;border-radius:10px;padding:10px 12px"><b>Canned tuna</b><br><span style="color:#94a3b8;font-size:11px">1 can = 25g protein</span></div>
+          <div style="background:#fff;border:1px solid #fecaca;border-radius:10px;padding:10px 12px"><b>Whey protein</b><br><span style="color:#94a3b8;font-size:11px">1 scoop ≈ 25g protein</span></div>
+        </div>
+        <div id="protein-tip" style="margin-top:12px;background:#fff;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#64748b"></div>
+      </div>
+    </div>
+
+    <!-- WATER -->
+    <div class="card" style="background:linear-gradient(135deg,#eff6ff,#fff);border-color:#bfdbfe">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="font-size:32px">💧</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.08em">Daily Water Target</div>
+          <div id="water-target" style="font-size:28px;font-weight:900;color:#1d4ed8;margin-top:2px"></div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px">litres per day · weight × 0.035</div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;font-size:13px;color:#1d4ed8;font-weight:600">
+        💡 Drink a glass of water before every meal — reduces hunger and helps hit your target easily.
+      </div>
+    </div>
+
+    <!-- QUICK REFERENCE TABLE -->
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px">📊 Quick Reference Table</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="border-bottom:2px solid #e2e8f0">
+              <th style="text-align:left;padding:8px 10px;color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Weight</th>
+              <th style="text-align:center;padding:8px 10px;color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Maintain</th>
+              <th style="text-align:center;padding:8px 10px;color:#1d4ed8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">🎯 Target</th>
+              <th style="text-align:center;padding:8px 10px;color:#dc2626;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">🥩 Protein</th>
+              <th style="text-align:center;padding:8px 10px;color:#1d4ed8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">💧 Water</th>
+            </tr>
+          </thead>
+          <tbody id="ref-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5 RULES -->
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px">5 Simple Rules — No Calorie Counting Needed</div>
+      <div class="rule-card"><div class="rule-num">1</div><div><b style="font-size:14px">Eat protein every meal</b><br><span style="font-size:13px;color:#64748b">Egg, chicken, fish, or tofu at every meal. Most important rule.</span></div></div>
+      <div class="rule-card"><div class="rule-num">2</div><div><b style="font-size:14px">Half your plate = vegetables</b><br><span style="font-size:13px;color:#64748b">Fill half with veggies first, then protein, then rice or carbs.</span></div></div>
+      <div class="rule-card"><div class="rule-num">3</div><div><b style="font-size:14px">No sugary drinks</b><br><span style="font-size:13px;color:#64748b">Bubble tea, sweetened iced coffee, soda — all hidden calories. Switch to plain water.</span></div></div>
+      <div class="rule-card"><div class="rule-num">4</div><div><b style="font-size:14px">Stop eating 3 hours before bed</b><br><span style="font-size:13px;color:#64748b">Your body burns fat during sleep. Don't interrupt it with food.</span></div></div>
+      <div class="rule-card" style="margin-bottom:0"><div class="rule-num">5</div><div><b style="font-size:14px">Walk 10,000 steps daily</b><br><span style="font-size:13px;color:#64748b">Burns 300–500 extra calories. More effective than skipping meals.</span></div></div>
+    </div>
+
+    <!-- SUMMARY CARD -->
+    <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a 60%,#7f1d1d);border-radius:16px;padding:24px;text-align:center">
+      <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">Your Daily Summary</div>
+      <div id="summary-weight" style="font-size:17px;font-weight:800;color:#fff;margin-bottom:20px"></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:360px;margin:0 auto">
+        <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:14px">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">🎯 Calories</div>
+          <div id="sum-cal" style="font-size:22px;font-weight:900;color:#fff"></div>
+        </div>
+        <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:14px">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">🥩 Protein</div>
+          <div id="sum-pro" style="font-size:22px;font-weight:900;color:#fca5a5"></div>
+        </div>
+        <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:14px">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">🍚 Carbs</div>
+          <div id="sum-carb" style="font-size:22px;font-weight:900;color:#93c5fd"></div>
+        </div>
+        <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:14px">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">💧 Water</div>
+          <div id="sum-water" style="font-size:22px;font-weight:900;color:#67e8f9"></div>
+        </div>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:rgba(255,255,255,.4)">📱 Screenshot this and save it</div>
+    </div>
+
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div id="empty-state" class="card" style="text-align:center;padding:40px 24px">
+    <div style="font-size:48px;margin-bottom:12px">⚖️</div>
+    <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:6px">Enter your weight above</div>
+    <div style="font-size:14px;color:#94a3b8">Your personal calorie and macro targets will appear instantly</div>
+  </div>
+
+</div>
+
+<script>
+function syncFromInput() {
+  const v = parseFloat(document.getElementById("weight-input").value);
+  if(v >= 40 && v <= 120) document.getElementById("weight-slider").value = v;
+  calculate();
+}
+function syncFromSlider(val) {
+  document.getElementById("weight-input").value = val;
+  calculate();
+}
+
+function calculate() {
+  const w = parseFloat(document.getElementById("weight-input").value);
+  if(!w || w < 30 || w > 200) {
+    document.getElementById("results").classList.add("result-hidden");
+    document.getElementById("empty-state").style.display = "block";
+    return;
+  }
+  document.getElementById("results").classList.remove("result-hidden");
+  document.getElementById("empty-state").style.display = "none";
+
+  // ── Core calculations ──────────────────────────────────────────
+  const maintain  = Math.round(w * 28);
+  const target    = Math.round(w * 28 - 200);
+  const water     = (w * 0.035).toFixed(1);
+
+  // Protein: 1.6g per kg → 4 cal per gram
+  const pG   = Math.round(w * 1.6);
+  const pCal = pG * 4;
+
+  // Remaining calories split 60% carbs / 40% fat
+  const remaining = target - pCal;
+  const cCal = Math.round(remaining * 0.60);
+  const fCal = Math.round(remaining * 0.40);
+  const cG   = Math.round(cCal / 4);
+  const fG   = Math.round(fCal / 9);
+
+  // Percentages of total for bar
+  const pPct = Math.round((pCal / target) * 100);
+  const cPct = Math.round((cCal / target) * 100);
+  const fPct = Math.round((fCal / target) * 100);
+
+  // ── Update DOM ─────────────────────────────────────────────────
+  document.getElementById("cal-maintain").textContent = maintain.toLocaleString();
+  document.getElementById("cal-target").textContent   = target.toLocaleString();
+
+  document.getElementById("p-g").textContent   = pG;
+  document.getElementById("p-cal").textContent = `(${pCal} cal · ${pPct}%)`;
+  document.getElementById("c-g").textContent   = cG;
+  document.getElementById("c-cal").textContent = `(${cCal} cal · ${cPct}%)`;
+  document.getElementById("f-g").textContent   = fG;
+  document.getElementById("f-cal").textContent = `(${fCal} cal · ${fPct}%)`;
+
+  document.getElementById("p-bar").style.width = pPct + "%";
+  document.getElementById("c-bar").style.width = cPct + "%";
+  document.getElementById("f-bar").style.width = fPct + "%";
+
+  document.getElementById("vis-p").style.width = pPct + "%";
+  document.getElementById("vis-c").style.width = cPct + "%";
+  document.getElementById("vis-f").style.width = fPct + "%";
+
+  document.getElementById("pct-breakdown").innerHTML =
+    `Protein <b style="color:#dc2626">${pPct}%</b> · Carbs <b style="color:#1d4ed8">${cPct}%</b> · Fat <b style="color:#d97706">${fPct}%</b> &nbsp;|&nbsp; Total: ${(pCal+cCal+fCal).toLocaleString()} cal`;
+
+  document.getElementById("protein-rule").textContent = `${pG}g protein / day`;
+  document.getElementById("protein-tip").textContent  =
+    `That's about ${Math.round(pG/31)} chicken breasts or ${Math.round(pG/6)} eggs worth of protein every day.`;
+
+  document.getElementById("water-target").textContent = `${water}L`;
+
+  // Summary
+  document.getElementById("summary-weight").textContent = `For a ${w} kg person`;
+  document.getElementById("sum-cal").textContent   = target.toLocaleString() + " cal";
+  document.getElementById("sum-pro").textContent   = pG + "g";
+  document.getElementById("sum-carb").textContent  = cG + "g";
+  document.getElementById("sum-water").textContent = water + "L";
+
+  // Reference table — highlight rows near user weight
+  const weights = [45,50,55,60,65,70,75,80,85,90];
+  let thtml = "";
+  weights.forEach(kw => {
+    const pGr = Math.round(kw * 1.6);
+    const tgt = kw * 28 - 200;
+    const isMe = Math.abs(kw - w) < 3;
+    thtml += `<tr style="border-bottom:1px solid #f1f5f9;background:${isMe?"#eff6ff":"transparent"}">
+      <td style="padding:10px;font-weight:${isMe?800:600};color:${isMe?"#1d4ed8":"#0f172a"}">${kw} kg${isMe?" ← you":""}</td>
+      <td style="padding:10px;text-align:center;color:#64748b">${(kw*28).toLocaleString()}</td>
+      <td style="padding:10px;text-align:center;font-weight:700;color:#1d4ed8">${tgt.toLocaleString()}</td>
+      <td style="padding:10px;text-align:center;color:#dc2626;font-weight:700">${pGr}g</td>
+      <td style="padding:10px;text-align:center;color:#1d4ed8;font-weight:600">${(kw*0.035).toFixed(1)}L</td>
+    </tr>`;
+  });
+  document.getElementById("ref-table").innerHTML = thtml;
+}
+</script>
+</body>
+</html>
