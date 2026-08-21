@@ -119,8 +119,10 @@ const LS={display:"block",fontSize:11,color:C.textLight,fontWeight:700,textTrans
 function calcScore(base,curr){
   if(!base||!curr||base.fat==null||curr.fat==null||base.muscle==null||curr.muscle==null)return null;
   const fatD=base.fat-curr.fat, musD=curr.muscle-base.muscle;
-  return{fatD,musD,fatPts:Math.round(fatD*10*10)/10,musPts:Math.round(musD*10*10)/10,
-         total:Math.round((fatD+musD)*10*10)/10};
+  const fatPts=Math.round(fatD*10*100)/100;
+  const musPts=Math.round(musD*10*100)/100;
+  const total=Math.round((fatPts+musPts)*100)/100;
+  return{fatD,musD,fatPts,musPts,total};
 }
 function getMissionTotal(missions,teamId){
   const tm=missions[teamId]||{};
@@ -157,190 +159,161 @@ function MemberRow({m, checkins, activeCP, photos}){
   const base    = history.baseline;
   const photo   = photos[m.key];
 
-  // CP order for fallback
   const cpOrder = ["cp4","cp3","cp2","cp1"];
   const selectedData = history[activeCP];
   const latestAvailId = cpOrder.find(c => history[c]);
   const curr   = selectedData || (latestAvailId ? history[latestAvailId] : null);
   const usedCP = selectedData ? activeCP : latestAvailId;
 
-  // Score vs BASELINE (cumulative — used for ranking)
   const sBase = (base && curr) ? calcScore(base, curr) : null;
-
-  // Score vs PREVIOUS CP (change this round)
   const cpIdx = CPS.findIndex(c => c.id === usedCP);
-  const prevCPId = cpIdx > 1 ? CPS[cpIdx - 1].id : "baseline";
+  const prevCPId = cpIdx > 1 ? CPS[cpIdx-1].id : "baseline";
   const prevData = history[prevCPId] || base;
   const sPrev = (prevData && curr && usedCP && usedCP !== "baseline")
     ? calcScore(prevData, curr) : null;
 
-  // All checkpoints with data for timeline
   const timeline = CPS.filter(c => history[c.id]);
 
-  function ScoreBadge({label, val, small}){
-    const pos = val >= 0;
-    return <span style={{
-      fontSize: small?10:11, fontWeight:700, padding:"2px 8px", borderRadius:20,
-      background: pos ? C.greenBg : C.redBg,
-      color: pos ? C.green : C.red,
-      border: `1px solid ${pos ? C.greenBorder : C.redBorder}`
-    }}>{label}: {pos?"+":""}{val.toFixed(1)}</span>;
+  function Chip({label, val, icon}){
+    const good = val >= 0;
+    return(
+      <div style={{display:"flex",alignItems:"center",gap:6,background:good?"#f0fdf4":"#fef2f2",
+        border:`1px solid ${good?"#bbf7d0":"#fecaca"}`,borderRadius:10,padding:"6px 12px"}}>
+        <span style={{fontSize:16}}>{icon}</span>
+        <div>
+          <div style={{fontSize:10,color:C.textFaint,fontWeight:600}}>{label}</div>
+          <div style={{fontSize:14,fontWeight:900,color:good?C.green:C.red}}>
+            {good?"▼ Lost ":"▲ Gained "}{Math.abs(val).toFixed(1)}%
+          </div>
+        </div>
+        <div style={{marginLeft:4,fontSize:13,fontWeight:800,
+          color:good?C.green:C.red,paddingLeft:6,
+          borderLeft:`1px solid ${good?"#bbf7d0":"#fecaca"}`}}>
+          {good?"+":""}{(val*10).toFixed(2)} pts
+        </div>
+      </div>
+    );
   }
 
   return(
-    <div style={{padding:"12px 0", borderBottom:`1px solid ${C.border}`}}>
-      <div style={{display:"grid", gridTemplateColumns:"44px 1fr auto", gap:12, alignItems:"flex-start"}}>
-        <Avatar src={photo} name={m.first} size={40} leader={m.leader}/>
-        <div>
-          <div style={{display:"flex", alignItems:"center", gap:6, flexWrap:"wrap", marginBottom:3}}>
-            <span style={{fontWeight:800, fontSize:14, color:C.text}}>{m.first} {m.last}</span>
-            {m.leader && <span style={{fontSize:10, background:C.goldBg, color:C.gold,
-              padding:"1px 7px", borderRadius:20, fontWeight:700,
+    <div style={{padding:"14px 0", borderBottom:`1px solid ${C.border}`}}>
+      {/* Name row */}
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+        <Avatar src={photo} name={m.first} size={42} leader={m.leader}/>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+            <span style={{fontWeight:800,fontSize:15,color:C.text}}>{m.first} {m.last}</span>
+            {m.leader&&<span style={{fontSize:10,background:C.goldBg,color:C.gold,
+              padding:"2px 8px",borderRadius:20,fontWeight:700,
               border:`1px solid ${C.goldBorder}`}}>⭐ Leader</span>}
           </div>
-          {base
-            ? <div style={{fontSize:11, color:C.textFaint}}>
-                Baseline: Fat {base.fat}% · Muscle {base.muscle}% {base.weight ? `· ${base.weight}kg` : ""}
-              </div>
-            : <div style={{fontSize:11, color:C.textFaint}}>No baseline yet</div>
-          }
-
-          {/* Change vs PREVIOUS CP */}
-          {sPrev && curr && (
-            <div style={{marginTop:6}}>
-              <div style={{fontSize:10, color:C.blue, fontWeight:700, textTransform:"uppercase",
-                letterSpacing:".08em", marginBottom:4}}>
-                vs {CPS.find(c=>c.id===prevCPId)?.label||"Baseline"} → {CPS.find(c=>c.id===usedCP)?.label} (this round)
-              </div>
-              <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
-                <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20,
-                  background: sPrev.fatD>=0 ? C.greenBg : C.redBg,
-                  color: sPrev.fatD>=0 ? C.green : C.red,
-                  border:`1px solid ${sPrev.fatD>=0 ? C.greenBorder : C.redBorder}`}}>
-                  Fat {prevData.fat}% → {curr.fat}% ({sPrev.fatD>=0?"−":"+"}{Math.abs(sPrev.fatD).toFixed(1)}%)
-                </span>
-                <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20,
-                  background: sPrev.musD>=0 ? C.greenBg : C.redBg,
-                  color: sPrev.musD>=0 ? C.green : C.red,
-                  border:`1px solid ${sPrev.musD>=0 ? C.greenBorder : C.redBorder}`}}>
-                  Muscle {prevData.muscle}% → {curr.muscle}% ({sPrev.musD>=0?"+":"−"}{Math.abs(sPrev.musD).toFixed(1)}%)
-                </span>
-                <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20,
-                  background: sPrev.total>=0 ? C.greenBg : C.redBg,
-                  color: sPrev.total>=0 ? C.green : C.red,
-                  border:`1px solid ${sPrev.total>=0 ? C.greenBorder : C.redBorder}`}}>
-                  This round: {sPrev.total>=0?"+":""}{sPrev.total.toFixed(1)} pts
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Total vs BASELINE */}
-          {sBase && (
-            <div style={{marginTop:6}}>
-              <div style={{fontSize:10, color:C.textFaint, fontWeight:700, textTransform:"uppercase",
-                letterSpacing:".08em", marginBottom:4}}>
-                vs Baseline → {CPS.find(c=>c.id===usedCP)?.label} (total progress)
-              </div>
-              <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
-                <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20,
-                  background: sBase.fatD>=0 ? C.greenBg : C.redBg,
-                  color: sBase.fatD>=0 ? C.green : C.red,
-                  border:`1px solid ${sBase.fatD>=0 ? C.greenBorder : C.redBorder}`}}>
-                  Fat: {sBase.fatD>=0?"−":"+"}{Math.abs(sBase.fatD).toFixed(1)}% total
-                </span>
-                <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20,
-                  background: sBase.musD>=0 ? C.greenBg : C.redBg,
-                  color: sBase.musD>=0 ? C.green : C.red,
-                  border:`1px solid ${sBase.musD>=0 ? C.greenBorder : C.redBorder}`}}>
-                  Muscle: {sBase.musD>=0?"+":"−"}{Math.abs(sBase.musD).toFixed(1)}% total
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* CP Timeline — card style like fitness challenge */}
-          {timeline.length > 0 && (
-            <div style={{marginTop:10}}>
-              <div style={{fontSize:10,fontWeight:700,color:C.textFaint,
-                textTransform:"uppercase",letterSpacing:".08em",marginBottom:6}}>
-                Check-in History
-              </div>
-              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                {/* Baseline card */}
-                {base && (
-                  <div style={{background:C.bg,border:`1px solid ${C.border}`,
-                    borderRadius:10,padding:"8px 10px",minWidth:90}}>
-                    <div style={{fontSize:10,fontWeight:700,color:C.textFaint,marginBottom:4}}>Baseline</div>
-                    {base.weight&&<div style={{fontSize:11,color:C.textMid,marginBottom:2}}>⚖️ {base.weight}kg</div>}
-                    <div style={{fontSize:12,fontWeight:700,color:C.red}}>🔴 {base.fat}%</div>
-                    <div style={{fontSize:12,fontWeight:700,color:C.blue}}>🔵 {base.muscle}%</div>
-                  </div>
-                )}
-                {/* CP cards */}
-                {timeline.filter(c=>c.id!=="baseline").map((c,i)=>{
-                  const d=history[c.id];
-                  const allCPs=["baseline","cp1","cp2","cp3","cp4"];
-                  const cIdx=allCPs.indexOf(c.id);
-                  const prevId=allCPs[cIdx-1];
-                  const prevD=history[prevId]||base;
-                  const diff=prevD&&d?calcScore(prevD,d):null;
-                  const isCurrent=c.id===usedCP;
-                  return(
-                    <div key={c.id} style={{
-                      background:isCurrent?"#f0fdf4":C.bg,
-                      border:`1.5px solid ${isCurrent?"#86efac":C.border}`,
-                      borderRadius:10,padding:"8px 10px",minWidth:90
-                    }}>
-                      <div style={{fontSize:10,fontWeight:800,
-                        color:isCurrent?C.green:C.blue,marginBottom:4}}>
-                        Week {CPS.find(cp=>cp.id===c.id)?.week}
-                      </div>
-                      {d.weight&&<div style={{fontSize:11,color:C.textMid,marginBottom:2}}>⚖️ {d.weight}kg</div>}
-                      <div style={{fontSize:12,fontWeight:700,color:C.red}}>
-                        🔴 {d.fat}%
-                        {diff&&<span style={{fontSize:10,color:diff.fatD>=0?C.green:C.red,marginLeft:3}}>
-                          ({diff.fatD>=0?"-":"+"}{Math.abs(diff.fatD).toFixed(1)})
-                        </span>}
-                      </div>
-                      <div style={{fontSize:12,fontWeight:700,color:C.blue}}>
-                        🔵 {d.muscle}%
-                        {diff&&<span style={{fontSize:10,color:diff.musD>=0?C.green:C.red,marginLeft:3}}>
-                          ({diff.musD>=0?"+":"-"}{Math.abs(diff.musD).toFixed(1)})
-                        </span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {base&&<div style={{fontSize:11,color:C.textFaint,marginTop:1}}>
+            Start: {base.fat}% body fat · {base.muscle}% muscle {base.weight?`· ${base.weight}kg`:""}
+          </div>}
+          {!base&&<div style={{fontSize:11,color:C.textFaint}}>No baseline scan yet</div>}
         </div>
-
-        {/* Score column — shows TOTAL vs baseline */}
-        <div style={{textAlign:"right", minWidth:60}}>
-          {sBase ? (
-            <>
-              <div style={{fontSize:18, fontWeight:900,
-                color: sBase.total>=0 ? C.green : C.red}}>
-                {sBase.total>=0?"+":""}{sBase.total}
-              </div>
-              <div style={{fontSize:9, color:C.textFaint, marginTop:1}}>total pts</div>
-              {sPrev && (
-                <div style={{fontSize:11, fontWeight:700, marginTop:4,
-                  color: sPrev.total>=0 ? C.green : C.red}}>
-                  {sPrev.total>=0?"+":""}{sPrev.total.toFixed(1)}
-                  <div style={{fontSize:9, color:C.textFaint, fontWeight:400}}>this round</div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div style={{fontSize:11, color:C.textFaint}}>
-              {base && activeCP !== "baseline" ? "No data" : ""}
+        {/* Total score badge */}
+        {sBase&&(
+          <div style={{textAlign:"center",background:sBase.total>=0?C.greenBg:C.redBg,
+            border:`1.5px solid ${sBase.total>=0?C.greenBorder:C.redBorder}`,
+            borderRadius:12,padding:"8px 14px",flexShrink:0}}>
+            <div style={{fontSize:20,fontWeight:900,color:sBase.total>=0?C.green:C.red}}>
+              {sBase.total>=0?"+":""}{sBase.total.toFixed(2)}
             </div>
-          )}
-        </div>
+            <div style={{fontSize:9,color:C.textFaint,fontWeight:600}}>TOTAL PTS</div>
+          </div>
+        )}
       </div>
+
+      {/* Progress chips — this round */}
+      {sPrev&&curr&&(
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:700,color:C.navy,
+            textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>
+            📊 This Round ({CPS.find(c=>c.id===prevCPId)?.label||"Baseline"} → {CPS.find(c=>c.id===usedCP)?.label})
+          </div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <Chip label="Body Fat" val={sPrev.fatD} icon="🔥"/>
+            <Chip label="Muscle" val={sPrev.musD} icon="💪"/>
+            <div style={{display:"flex",alignItems:"center",gap:6,
+              background:sPrev.total>=0?C.blueBg:C.redBg,
+              border:`1px solid ${sPrev.total>=0?C.blueBorder:C.redBorder}`,
+              borderRadius:10,padding:"6px 12px"}}>
+              <span style={{fontSize:16}}>🏆</span>
+              <div>
+                <div style={{fontSize:10,color:C.textFaint,fontWeight:600}}>Round Score</div>
+                <div style={{fontSize:14,fontWeight:900,color:sPrev.total>=0?C.blue:C.red}}>
+                  {sPrev.total>=0?"+":""}{sPrev.total.toFixed(2)} pts
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Checkpoint history cards */}
+      {timeline.length>0&&(
+        <div>
+          <div style={{fontSize:10,fontWeight:700,color:C.textFaint,
+            textTransform:"uppercase",letterSpacing:".1em",marginBottom:6}}>
+            📅 All Check-ins
+          </div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {/* Baseline */}
+            {base&&(
+              <div style={{background:C.bg,border:`1px solid ${C.border}`,
+                borderRadius:10,padding:"8px 12px",minWidth:90}}>
+                <div style={{fontSize:10,fontWeight:700,color:C.textFaint,marginBottom:5}}>Start</div>
+                {base.weight&&<div style={{fontSize:11,color:C.textMid,marginBottom:3}}>⚖️ {base.weight}kg</div>}
+                <div style={{fontSize:12,fontWeight:700,color:C.textMid}}>Fat: {base.fat}%</div>
+                <div style={{fontSize:12,fontWeight:700,color:C.textMid}}>Muscle: {base.muscle}%</div>
+              </div>
+            )}
+            {/* CP cards */}
+            {timeline.filter(c=>c.id!=="baseline").map(c=>{
+              const d=history[c.id];
+              const allCPs=["baseline","cp1","cp2","cp3","cp4"];
+              const cIdx=allCPs.indexOf(c.id);
+              const prevId=allCPs[cIdx-1];
+              const prevD=history[prevId]||base;
+              const diff=prevD&&d?calcScore(prevD,d):null;
+              const isCurrent=c.id===usedCP;
+              const weekNum=CPS.find(cp=>cp.id===c.id)?.week;
+              return(
+                <div key={c.id} style={{
+                  background:isCurrent?"#f0fdf4":C.bg,
+                  border:`1.5px solid ${isCurrent?"#86efac":C.border}`,
+                  borderRadius:10,padding:"8px 12px",minWidth:90
+                }}>
+                  <div style={{fontSize:10,fontWeight:800,
+                    color:isCurrent?C.green:C.textMid,marginBottom:5}}>
+                    Week {weekNum}{isCurrent?" ✓":""}
+                  </div>
+                  {d.weight&&<div style={{fontSize:11,color:C.textMid,marginBottom:3}}>⚖️ {d.weight}kg</div>}
+                  <div style={{fontSize:12,fontWeight:700,color:C.textMid}}>
+                    Fat: {d.fat}%
+                    {diff&&<span style={{fontSize:10,marginLeft:3,
+                      color:diff.fatD>=0?C.green:C.red,fontWeight:800}}>
+                      ({diff.fatD>=0?"↓":"↑"}{Math.abs(diff.fatD).toFixed(1)})
+                    </span>}
+                  </div>
+                  <div style={{fontSize:12,fontWeight:700,color:C.textMid}}>
+                    Muscle: {d.muscle}%
+                    {diff&&<span style={{fontSize:10,marginLeft:3,
+                      color:diff.musD>=0?C.green:C.red,fontWeight:800}}>
+                      ({diff.musD>=0?"↑":"↓"}{Math.abs(diff.musD).toFixed(1)})
+                    </span>}
+                  </div>
+                  {diff&&<div style={{fontSize:11,fontWeight:800,marginTop:4,
+                    color:diff.total>=0?C.green:C.red}}>
+                    {diff.total>=0?"+":""}{diff.total.toFixed(2)} pts
+                  </div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -396,7 +369,7 @@ function TeamCard({team,rank,healthScore,healthScoreRound,missionScore,checkins,
         </div>
         <div style={{textAlign:"right"}}>
           <div style={{fontSize:22, fontWeight:900, color:isTop3?C.red:C.textMid}}>
-            {total>=0?"+":""}{Math.round(total*10)/10}
+            {total>=0?"+":" "}{total.toFixed(2)}
           </div>
           <div style={{fontSize:9, color:C.textFaint}}>total score</div>
           <div style={{fontSize:11, color:C.textFaint, marginTop:2}}>{expanded?"▲ hide":"▼ members"}</div>
@@ -900,13 +873,13 @@ function App(){
                   {top.scoreRound!=null&&(
                     <div style={{fontSize:11,fontWeight:700,marginTop:3,
                       color:top.scoreRound>=0?C.blue:C.red}}>
-                      {top.scoreRound>=0?"+":""}{top.scoreRound.toFixed(1)} pts this round
+                      {top.scoreRound>=0?"+":""}{top.scoreRound.toFixed(2)} pts this round
                     </div>
                   )}
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
                   <div style={{fontSize:22,fontWeight:900,color:top.score>=0?C.green:C.red}}>
-                    {top.score>=0?"+":""}{top.score.toFixed(1)}
+                    {top.score>=0?"+":""}{top.score.toFixed(2)}
                   </div>
                   <div style={{fontSize:9,color:C.textFaint}}>total pts</div>
                 </div>
