@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRC Tech Fit Challenge 2026</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f5f7fa;color:#0f172a;min-height:100vh;padding-bottom:60px}
+.card{background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.btn-red{background:linear-gradient(135deg,#dc2626,#1d4ed8);color:#fff;padding:12px 24px;font-size:14px;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chov{transition:box-shadow .15s,transform .15s;cursor:pointer}
+.chov:hover{box-shadow:0 4px 20px rgba(15,23,42,.1)!important;transform:translateY(-1px)}
+input::placeholder{color:#cbd5e1}
+input:focus,select:focus{outline:none;border-color:#3b82f6!important;box-shadow:0 0 0 3px rgba(59,130,246,.15)!important}
+</style>
+</head>
+<body>
+<script>
+var firebaseConfig={apiKey:"AIzaSyCak_UnprN5GLIQywmP-P-jOZWLSnUCY7I",authDomain:"week-challenge-634ed.firebaseapp.com",databaseURL:"https://week-challenge-634ed-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"week-challenge-634ed",storageBucket:"week-challenge-634ed.firebasestorage.app",messagingSenderId:"140696884096",appId:"1:140696884096:web:579c2a2f6e12e6ed6de765"};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+window._crcdb=firebase.database();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+const ADMIN_PIN="CRC2026";
+const db=window._crcdb;
+
+// ── TEAM DATA (from Excel) ────────────────────────────────────────────────────
+const TEAMS=[
+  {id:1,name:"404 Fitness Not Found",members:[
+    {key:"1_Chokchai",    first:"Chokchai",   last:"Manoonparnith",  leader:false},
+    {key:"1_Isara",       first:"Isara",      last:"Chootip",        leader:false},
+    {key:"1_Bibek",       first:"Bibek",      last:"Aryal",          leader:false},
+    {key:"1_Martin",      first:"Martin",     last:"Turner",         leader:true},
+    {key:"1_Shivam",      first:"Shivam",     last:"Sharma",         leader:false},
+  ]},
+  {id:2,name:"Wink White Wer",members:[
+    {key:"2_Thikhamporn", first:"Thikhamporn",last:"Chompoosart",    leader:false},
+    {key:"2_Warunee",     first:"Warunee",    last:"Chaloemwongwiwat",leader:false},
+    {key:"2_Sirikitiya",  first:"Sirikitiya", last:"Voradetjamroen", leader:true},
+    {key:"2_Nattnapong",  first:"Nattnapong", last:"Sombatlerttrakul",leader:false},
+    {key:"2_Lopavit",     first:"Lopavit",    last:"Mahapun",        leader:false},
+  ]},
+  {id:3,name:"Calories Killer",members:[
+    {key:"3_Sageereen",   first:"Sageereen",  last:"Matiwat",        leader:false},
+    {key:"3_Methinee",    first:"Methinee",   last:"Sathian",        leader:true},
+    {key:"3_Anuchit",     first:"Anuchit",    last:"Udomsuk",        leader:false},
+    {key:"3_Wiraporn",    first:"Wiraporn",   last:"Chitrakorn",     leader:false},
+    {key:"3_Natnapa",     first:"Natnapa",    last:"Raktavee",       leader:false},
+  ]},
+  {id:4,name:"Mission Slim-Possible",members:[
+    {key:"4_Nathawat",    first:"Nathawat",   last:"Namtong",        leader:false},
+    {key:"4_Sureerat",    first:"Sureerat",   last:"Kunphom",        leader:true},
+    {key:"4_Supachai",    first:"Supachai",   last:"Vongwuthi",      leader:false},
+    {key:"4_Nuttavee",    first:"Nuttavee",   last:"Uengpanich",     leader:false},
+    {key:"4_Nuttanun",    first:"Nuttanun",   last:"Dacha",          leader:false},
+  ]},
+  {id:5,name:"Will Sweat For THB 20,000",members:[
+    {key:"5_Phutanat",    first:"Phutanat",   last:"Pearmalang",     leader:false},
+    {key:"5_Nut",         first:"Nut",        last:"Tatirat",        leader:true},
+    {key:"5_Peeranon",    first:"Peeranon",   last:"Posawang",       leader:false},
+    {key:"5_Oraya",       first:"Oraya",      last:"Tankham",        leader:false},
+    {key:"5_Sanpitch",    first:"Sanpitch",   last:"Phuvapaisankit", leader:false},
+  ]},
+  {id:6,name:"The Slow And The Curious",members:[
+    {key:"6_Suchachuan",  first:"Suchachuan", last:"Nachom",         leader:true},
+    {key:"6_ShiuanWei",   first:"Shiuan Wei", last:"Chong",          leader:false},
+    {key:"6_Chusada",     first:"Chusada",    last:"Wattanastienkul",leader:false},
+    {key:"6_Arthikhun",   first:"Arthikhun",  last:"Rattanaprueksachart",leader:false},
+    {key:"6_Surapon",     first:"Surapon",    last:"Kunsri",         leader:false},
+  ]},
+  {id:7,name:"S.W.E.A.T. Initiative",members:[
+    {key:"7_Teerawoot",   first:"Teerawoot",  last:"Phonok",         leader:false},
+    {key:"7_SoumyaGundu", first:"Soumya Gundu",last:"Badachi",       leader:true},
+    {key:"7_KishanVrajlal",first:"Kishan Vrajlal",last:"Ajudiya",    leader:false},
+    {key:"7_Pasuta",      first:"Pasuta",     last:"Chitvarakorn",   leader:false},
+    {key:"7_Patcharapon", first:"Patcharapon",last:"Chaiporn",       leader:false},
+  ]},
+  {id:8,name:"Deploy Little Piglets",members:[
+    {key:"8_Akarapon",    first:"Akarapon",   last:"Piyawin",        leader:false},
+    {key:"8_Nydradee",    first:"Nydradee",   last:"Ungtohanant",    leader:false},
+    {key:"8_Wachirawit",  first:"Wachirawit", last:"Pothisingha",    leader:false},
+    {key:"8_Parin",       first:"Parin",      last:"Jatesiktat",     leader:false},
+    {key:"8_Witsaroot",   first:"Witsaroot",  last:"Wongtanya",      leader:true},
+  ]},
+];
+
+const CPS=[
+  {id:"baseline",label:"Baseline",week:0},
+  {id:"cp1",label:"CP1",week:2},
+  {id:"cp2",label:"CP2",week:4},
+  {id:"cp3",label:"CP3",week:6},
+  {id:"cp4",label:"CP4 · Final",week:8},
+];
+
+const C={
+  bg:"#f5f7fa",card:"#fff",border:"#e2e8f0",
+  red:"#dc2626",redBg:"#fef2f2",redBorder:"#fecaca",
+  blue:"#1d4ed8",blueBg:"#eff6ff",blueBorder:"#bfdbfe",
+  navy:"#0f172a",gold:"#d97706",goldBg:"#fffbeb",goldBorder:"#fde68a",
+  green:"#16a34a",greenBg:"#f0fdf4",greenBorder:"#bbf7d0",
+  text:"#0f172a",textMid:"#334155",textLight:"#64748b",textFaint:"#94a3b8",
+};
+
+const IS={width:"100%",background:"#f8fafc",border:`1.5px solid ${C.border}`,borderRadius:10,padding:"11px 14px",color:C.text,fontSize:15,outline:"none",appearance:"none",WebkitAppearance:"none",fontFamily:"'Inter',sans-serif"};
+const LS={display:"block",fontSize:11,color:C.textLight,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",marginBottom:6};
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function calcScore(base,curr){
+  if(!base||!curr||base.fat==null||curr.fat==null||base.muscle==null||curr.muscle==null)return null;
+  const fatD=base.fat-curr.fat, musD=curr.muscle-base.muscle;
+  return{fatD,musD,fatPts:Math.round(fatD*10*10)/10,musPts:Math.round(musD*10*10)/10,
+         total:Math.round((fatD+musD)*10*10)/10};
+}
+function getMissionTotal(missions,teamId){
+  const tm=missions[teamId]||{};
+  return Object.values(tm).reduce((s,m)=>s+(m.points||0),0);
+}
+function readFile(file,cb){const r=new FileReader();r.onload=e=>cb(e.target.result);r.readAsDataURL(file);}
+
+// ── AVATAR ────────────────────────────────────────────────────────────────────
+function Avatar({src,name,size=38,leader=false}){
+  const cols=["#dc2626","#1d4ed8","#b91c1c","#1e40af","#7f1d1d","#059669","#c2410c","#7c3aed","#0891b2","#d97706"];
+  const idx=name.split("").reduce((a,c)=>a+c.charCodeAt(0),0)%cols.length;
+  return(
+    <div style={{position:"relative",flexShrink:0}}>
+      {src
+        ?<img src={src} alt={name} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",border:`2px solid ${leader?"#d97706":C.border}`}}/>
+        :<div style={{width:size,height:size,borderRadius:"50%",background:cols[idx],display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.36,fontWeight:800,color:"#fff",border:`2px solid ${leader?"#d97706":"rgba(0,0,0,.08)"}`}}>
+          {name.slice(0,2).toUpperCase()}
+        </div>
+      }
+      {leader&&<div style={{position:"absolute",bottom:-2,right:-2,background:"#d97706",borderRadius:"50%",width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,border:"1.5px solid #fff"}}>⭐</div>}
+    </div>
+  );
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function Toast({msg,onDone}){
+  useEffect(()=>{const t=setTimeout(onDone,3000);return()=>clearTimeout(t);},[]);
+  return <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",background:C.navy,color:"#fff",fontWeight:700,padding:"13px 28px",borderRadius:14,zIndex:9999,boxShadow:"0 8px 32px rgba(0,0,0,.25)",fontSize:14,whiteSpace:"nowrap",animation:"fadeUp .25s ease"}}>{msg}</div>;
+}
+
+// ── MEMBER ROW ────────────────────────────────────────────────────────────────
+function MemberRow({m, checkins, activeCP, photos}){
+  const base=checkins[m.key]?.baseline;
+  const history=checkins[m.key]||{};
+  // Use selected CP data, fall back to latest available
+  const cpOrder=["cp4","cp3","cp2","cp1"];
+  const selectedData=history[activeCP];
+  const latestAvail=cpOrder.find(c=>history[c]);
+  const curr=selectedData||(latestAvail?history[latestAvail]:null);
+  const usedCP=selectedData?activeCP:latestAvail;
+  const s=(base&&curr)?calcScore(base,curr):null;
+  const photo=photos[m.key];
+  const latestCP=CPS.find(c=>c.id===usedCP);
+
+  return(
+    <div style={{display:"grid",gridTemplateColumns:"44px 1fr auto",gap:12,padding:"12px 0",borderBottom:`1px solid ${C.border}`,alignItems:"flex-start"}}>
+      <Avatar src={photo} name={m.first} size={40} leader={m.leader}/>
+      <div>
+        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:3}}>
+          <span style={{fontWeight:800,fontSize:14,color:C.text}}>{m.first} {m.last}</span>
+          {m.leader&&<span style={{fontSize:10,background:C.goldBg,color:C.gold,padding:"1px 7px",borderRadius:20,fontWeight:700,border:`1px solid ${C.goldBorder}`}}>⭐ Leader</span>}
+        </div>
+        {base?(
+          <div style={{fontSize:11,color:C.textFaint}}>
+            Baseline: Fat {base.fat}% · Muscle {base.muscle}% {base.weight?`· ${base.weight}kg`:""}
+          </div>
+        ):<div style={{fontSize:11,color:C.textFaint}}>No baseline yet</div>}
+        {/* Progress arrow: baseline → latest available */}
+        {s&&latestCP&&(
+          <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+            {latestCP&&!selectedData&&<span style={{fontSize:10,color:C.textFaint,padding:"2px 8px",borderRadius:20,border:`1px solid ${C.border}`,background:C.bg}}>using {latestCP.label}</span>}
+            <span style={{fontSize:11,background:s.fatD>=0?C.greenBg:C.redBg,color:s.fatD>=0?C.green:C.red,padding:"2px 8px",borderRadius:20,fontWeight:700,border:`1px solid ${s.fatD>=0?C.greenBorder:C.redBorder}`}}>
+              Fat {base.fat}% → {curr.fat}% ({s.fatD>=0?"−":"+"}{ Math.abs(s.fatD).toFixed(1)}%)
+            </span>
+            <span style={{fontSize:11,background:s.musD>=0?C.greenBg:C.redBg,color:s.musD>=0?C.green:C.red,padding:"2px 8px",borderRadius:20,fontWeight:700,border:`1px solid ${s.musD>=0?C.greenBorder:C.redBorder}`}}>
+              Muscle {base.muscle}% → {curr.muscle}% ({s.musD>=0?"+":"−"}{Math.abs(s.musD).toFixed(1)}%)
+            </span>
+          </div>
+        )}
+      </div>
+      <div style={{textAlign:"right"}}>
+        {s?(
+          <>
+            <div style={{fontSize:18,fontWeight:900,color:s.total>=0?C.green:C.red}}>
+              {s.total>=0?"+":""}{s.total}
+            </div>
+            <div style={{fontSize:10,color:C.textFaint,marginTop:2}}>pts</div>
+          </>
+        ):<div style={{fontSize:11,color:C.textFaint}}>{base&&activeCP!=="baseline"?"No CP data":""}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ── TEAM CARD ─────────────────────────────────────────────────────────────────
+function TeamCard({team,rank,healthScore,missionScore,checkins,activeCP,photos,expanded,onToggle}){
+  const total=healthScore+missionScore;
+  const medals=["🥇","🥈","🥉"];
+  const isTop3=rank<=3;
+  const leaderCount=team.members.filter(m=>m.leader).length;
+
+  return(
+    <div className="chov" style={{background:"#fff",border:`1.5px solid ${isTop3?C.red:C.border}`,borderRadius:16,overflow:"hidden",boxShadow:isTop3?"0 2px 12px rgba(220,38,38,.1)":"0 1px 4px rgba(0,0,0,.05)"}}>
+      <div style={{display:"grid",gridTemplateColumns:"44px 1fr auto",gap:12,padding:"16px 18px",alignItems:"center"}} onClick={onToggle}>
+        <div style={{textAlign:"center"}}>
+          {isTop3?<span style={{fontSize:26}}>{medals[rank-1]}</span>
+                 :<span style={{fontSize:16,fontWeight:800,color:C.textFaint}}>{rank}</span>}
+        </div>
+        <div>
+          <div style={{fontWeight:800,fontSize:15,color:C.text,marginBottom:5}}>{team.name}</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            <span style={{fontSize:11,background:healthScore>=0?C.greenBg:C.redBg,color:healthScore>=0?C.green:C.red,padding:"2px 8px",borderRadius:20,fontWeight:700,border:`1px solid ${healthScore>=0?C.greenBorder:C.redBorder}`}}>
+              Health {healthScore>=0?"+":""}{healthScore}
+            </span>
+            <span style={{fontSize:11,background:C.goldBg,color:C.gold,padding:"2px 8px",borderRadius:20,fontWeight:700,border:`1px solid ${C.goldBorder}`}}>
+              Mission +{missionScore}
+            </span>
+            {leaderCount>0&&<span style={{fontSize:11,background:C.goldBg,color:C.gold,padding:"2px 8px",borderRadius:20,fontWeight:700,border:`1px solid ${C.goldBorder}`}}>
+              ⭐ {leaderCount} leader{leaderCount>1?"s":""}
+            </span>}
+          </div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <div style={{fontSize:22,fontWeight:900,color:isTop3?C.red:C.textMid}}>
+            {total>=0?"+":""}{Math.round(total*10)/10}
+          </div>
+          <div style={{fontSize:11,color:C.textFaint,marginTop:2}}>{expanded?"▲ hide":"▼ members"}</div>
+        </div>
+      </div>
+
+      {/* Member detail */}
+      {expanded&&(
+        <div style={{borderTop:`1px solid ${C.border}`,padding:"4px 18px 16px"}}>
+          <div style={{fontSize:10,fontWeight:700,color:C.textFaint,textTransform:"uppercase",letterSpacing:".1em",padding:"10px 0 4px"}}>
+            Members · {CPS.find(c=>c.id===activeCP)?.label||""}
+          </div>
+          {team.members.map(m=>(
+            <MemberRow key={m.key} m={m} checkins={checkins} activeCP={activeCP} photos={photos}/>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ADMIN PANEL ───────────────────────────────────────────────────────────────
+function AdminPanel({checkins,missions,photos,toast}){
+  const [pin,setPin]=useState("");
+  const [authed,setAuthed]=useState(false);
+  const [adminTab,setAdminTab]=useState("checkin");
+
+  // Check-in state
+  const [teamId,setTeamId]=useState("");
+  const [memberKey,setMemberKey]=useState("");
+  const [cp,setCp]=useState("baseline");
+  const [weight,setWeight]=useState("");
+  const [fat,setFat]=useState("");
+  const [muscleKg,setMuscleKg]=useState("");
+  const [muscleP,setMuscleP]=useState("");
+  const [saving,setSaving]=useState(false);
+
+  // Mission state
+  const [mTeam,setMTeam]=useState("");
+  const [mName,setMName]=useState("");
+  const [mPts,setMPts]=useState("");
+  const [mNotes,setMNotes]=useState("");
+
+  // Photo state
+  const [pTeam,setPTeam]=useState("");
+  const [pMember,setPMember]=useState("");
+  const [pFile,setPFile]=useState(null);
+
+  useEffect(()=>{
+    if(muscleKg&&weight){
+      const p=parseFloat(muscleKg)/parseFloat(weight)*100;
+      if(!isNaN(p)&&p>0)setMuscleP(p.toFixed(1));
+    }
+  },[muscleKg,weight]);
+
+  const team=TEAMS.find(t=>t.id===+teamId);
+  const pTeamObj=TEAMS.find(t=>t.id===+pTeam);
+
+  // Score preview
+  const memberKeyStr=memberKey;
+  const base=checkins[memberKeyStr]?.baseline;
+  let preview=null;
+  if(base&&fat&&muscleP&&cp&&cp!=="baseline"){
+    const fatD=base.fat-+fat, musD=+muscleP-base.muscle;
+    preview={fat:Math.round(fatD*10*10)/10, mus:Math.round(musD*10*10)/10, total:Math.round((fatD+musD)*10*10)/10};
+  }
+
+  async function saveCheckin(e){
+    e.preventDefault();
+    if(!memberKey||!fat||!muscleP)return toast("⚠️ Fill all required fields");
+    const entry={fat:+fat,muscle:+muscleP};
+    if(weight)entry.weight=+weight;
+    setSaving(true);
+    try{
+      await db.ref(`crc_checkins/${memberKey}/${cp}`).set(entry);
+      toast(`✅ ${memberKey.split("_")[1]} · ${cp.toUpperCase()} saved!`);
+      setFat("");setMuscleKg("");setMuscleP("");setWeight("");
+    }catch{toast("❌ Save failed");}
+    setSaving(false);
+  }
+
+  async function saveMission(){
+    if(!mTeam||!mName||!mPts)return toast("⚠️ Fill team, name and points");
+    await db.ref(`crc_missions/${mTeam}/m_${Date.now()}`).set({name:mName,points:+mPts,notes:mNotes,ts:Date.now()});
+    toast(`✅ Mission added`); setMName("");setMPts("");setMNotes("");
+  }
+
+  async function deleteMission(tid,mid){
+    await db.ref(`crc_missions/${tid}/${mid}`).remove();
+    toast("🗑️ Deleted");
+  }
+
+  async function savePhoto(){
+    if(!pMember||!pFile)return toast("⚠️ Select member and photo");
+    await db.ref(`crc_photos/${pMember}`).set(pFile);
+    toast(`✅ Photo saved for ${pMember}`); setPFile(null);
+  }
+
+  if(!authed) return(
+    <div style={{maxWidth:360,margin:"40px auto"}}>
+      <div className="card" style={{textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:12}}>🔐</div>
+        <h3 style={{fontWeight:800,fontSize:18,marginBottom:6}}>Admin Panel</h3>
+        <p style={{fontSize:13,color:C.textLight,marginBottom:20}}>Enter PIN to access all features</p>
+        <input type="password" value={pin} onChange={e=>setPin(e.target.value)}
+          placeholder="PIN" style={{...IS,textAlign:"center",fontSize:20,letterSpacing:"6px",marginBottom:12}}
+          onKeyDown={e=>{if(e.key==="Enter"){if(pin===ADMIN_PIN)setAuthed(true);else{setPin("");toast("⚠️ Wrong PIN");}}}}/>
+        <button className="btn-red" style={{width:"100%",padding:"13px",fontSize:16}}
+          onClick={()=>{if(pin===ADMIN_PIN)setAuthed(true);else{setPin("");toast("⚠️ Wrong PIN");}}}>Unlock</button>
+      </div>
+    </div>
+  );
+
+  const ATABS=[["checkin","📋 Check-in"],["mission","🎯 Missions"],["photos","📸 Photos"]];
+
+  return(
+    <div style={{maxWidth:700,margin:"0 auto"}}>
+      {/* Admin sub-tabs */}
+      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+        {ATABS.map(([id,label])=>(
+          <button key={id} onClick={()=>setAdminTab(id)} style={{border:"none",cursor:"pointer",
+            fontWeight:700,fontSize:13,padding:"9px 18px",borderRadius:20,transition:"all .18s",
+            background:adminTab===id?C.red:"#fff",color:adminTab===id?"#fff":C.textLight,
+            border:`1px solid ${adminTab===id?C.red:C.border}`}}>{label}</button>
+        ))}
+      </div>
+
+      {/* CHECK-IN */}
+      {adminTab==="checkin"&&(
+        <div className="card">
+          <h3 style={{fontWeight:800,fontSize:16,color:C.text,marginBottom:16}}>📋 Enter Scan Data</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              <div>
+                <label style={LS}>Team</label>
+                <select value={teamId} onChange={e=>{setTeamId(e.target.value);setMemberKey("");}} style={IS}>
+                  <option value="">— Team —</option>
+                  {TEAMS.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={LS}>Member</label>
+                <select value={memberKey} onChange={e=>setMemberKey(e.target.value)} style={IS} disabled={!team}>
+                  <option value="">— Name —</option>
+                  {team?.members.map(m=><option key={m.key} value={m.key}>{m.first} {m.last}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={LS}>Checkpoint</label>
+              <select value={cp} onChange={e=>setCp(e.target.value)} style={IS}>
+                {CPS.map(c=><option key={c.id} value={c.id}>{c.label} · Week {c.week}</option>)}
+              </select>
+            </div>
+            <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
+              <div style={{fontSize:10,color:C.textFaint,textTransform:"uppercase",letterSpacing:".12em",fontWeight:700,marginBottom:14}}>Scan Numbers</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+                <div>
+                  <label style={LS}>Weight (kg)</label>
+                  <div style={{position:"relative"}}>
+                    <input type="number" step="0.1" min="30" max="250" value={weight} onChange={e=>setWeight(e.target.value)} placeholder="75.0" style={IS}/>
+                    <span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",color:C.textFaint,fontSize:12,fontWeight:600}}>kg</span>
+                  </div>
+                </div>
+                <div>
+                  <label style={LS}>Body Fat %</label>
+                  <div style={{position:"relative"}}>
+                    <input type="number" step="0.1" min="1" max="70" value={fat} onChange={e=>setFat(e.target.value)} placeholder="28.5" style={IS} required/>
+                    <span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",color:C.textFaint,fontSize:12,fontWeight:600}}>%</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label style={LS}>Skeletal Muscle Mass (kg) <span style={{color:C.blue,fontWeight:700}}>→ auto %</span></label>
+                <div style={{position:"relative",marginBottom:8}}>
+                  <input type="number" step="0.1" min="5" max="120" value={muscleKg} onChange={e=>setMuscleKg(e.target.value)} placeholder="31.5" style={IS}/>
+                  <span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",color:C.textFaint,fontSize:12,fontWeight:600}}>kg</span>
+                </div>
+                {muscleKg&&weight&&(
+                  <div style={{background:C.blueBg,border:`1px solid ${C.blueBorder}`,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:13,color:C.textMid}}>{muscleKg} ÷ {weight} × 100</span>
+                    <span style={{fontSize:17,fontWeight:900,color:C.blue}}>= {muscleP}%</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {preview&&(
+              <div style={{background:C.goldBg,border:`1px solid ${C.goldBorder}`,borderRadius:12,padding:"14px 16px"}}>
+                <div style={{fontSize:11,color:C.gold,fontWeight:800,textTransform:"uppercase",letterSpacing:".08em",marginBottom:10}}>Score Preview</div>
+                <div style={{display:"flex",gap:8}}>
+                  {[["Fat pts",preview.fat],[" Muscle pts",preview.mus],["Total",preview.total]].map(([l,v],i)=>(
+                    <div key={l} style={{flex:1,background:i===2?C.gold:"#fff",borderRadius:10,padding:"8px",textAlign:"center",border:`1px solid ${i===2?"transparent":C.goldBorder}`}}>
+                      <div style={{fontSize:10,color:i===2?"rgba(255,255,255,.8)":C.textLight,marginBottom:2}}>{l}</div>
+                      <div style={{fontSize:16,fontWeight:900,color:i===2?"#fff":v>=0?C.green:C.red}}>{v>=0?"+":""}{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button className="btn-red" onClick={saveCheckin} disabled={saving} style={{width:"100%",padding:"14px",fontSize:16,opacity:saving?.6:1}}>
+              {saving?"Saving...":"Save Check-in →"}
+            </button>
+            {/* History */}
+            {memberKey&&checkins[memberKey]&&Object.keys(checkins[memberKey]).length>0&&(
+              <div style={{marginTop:4,borderTop:`1px solid ${C.border}`,paddingTop:14}}>
+                <div style={{fontWeight:700,fontSize:12,color:C.textMid,marginBottom:10,textTransform:"uppercase",letterSpacing:".08em"}}>{memberKey.split("_")[1]}'s History</div>
+                {CPS.filter(c=>checkins[memberKey][c.id]).map(c=>(
+                  <div key={c.id} style={{display:"grid",gridTemplateColumns:"auto 1fr 1fr 1fr",gap:8,padding:"8px 0",borderTop:`1px solid ${C.border}`,fontSize:13}}>
+                    <span style={{color:C.blue,fontWeight:700,minWidth:40}}>{c.label}</span>
+                    <span style={{color:C.textMid}}>{checkins[memberKey][c.id].weight!=null?`${checkins[memberKey][c.id].weight}kg`:"—"}</span>
+                    <span style={{color:C.red,fontWeight:700}}>{checkins[memberKey][c.id].fat}%</span>
+                    <span style={{color:C.blue,fontWeight:700}}>{checkins[memberKey][c.id].muscle}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MISSIONS */}
+      {adminTab==="mission"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div className="card">
+            <h3 style={{fontWeight:800,fontSize:15,color:C.text,marginBottom:14}}>➕ Add Mission Score</h3>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+              <div>
+                <label style={LS}>Team</label>
+                <select value={mTeam} onChange={e=>setMTeam(e.target.value)} style={IS}>
+                  <option value="">— Team —</option>
+                  {TEAMS.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={LS}>Points</label>
+                <input type="number" value={mPts} onChange={e=>setMPts(e.target.value)} placeholder="50" style={IS}/>
+              </div>
+            </div>
+            <div style={{marginBottom:12}}>
+              <label style={LS}>Mission Name</label>
+              <input type="text" value={mName} onChange={e=>setMName(e.target.value)} placeholder="e.g. Mission 2 · Rope Slams" style={IS}/>
+            </div>
+            <div style={{marginBottom:14}}>
+              <label style={LS}>Notes (optional)</label>
+              <input type="text" value={mNotes} onChange={e=>setMNotes(e.target.value)} placeholder="e.g. All members completed" style={IS}/>
+            </div>
+            <button className="btn-red" onClick={saveMission} style={{padding:"12px 28px"}}>Add Mission Score</button>
+          </div>
+          {/* Mission log */}
+          {TEAMS.map(t=>{
+            const tm=missions[t.id]||{};
+            const entries=Object.entries(tm);
+            const total=entries.reduce((s,[,m])=>s+(m.points||0),0);
+            return(
+              <div key={t.id} className="card">
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:entries.length?10:0}}>
+                  <div style={{fontWeight:700,fontSize:14}}>{t.name}</div>
+                  <div style={{fontWeight:800,color:C.gold}}>+{total} pts</div>
+                </div>
+                {entries.map(([id,m])=>(
+                  <div key={id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderTop:`1px solid ${C.border}`,fontSize:13}}>
+                    <div>
+                      <span style={{fontWeight:600}}>{m.name}</span>
+                      {m.notes&&<span style={{color:C.textFaint,marginLeft:8,fontSize:12}}> · {m.notes}</span>}
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontWeight:700,color:C.gold}}>+{m.points}</span>
+                      <button onClick={()=>deleteMission(t.id,id)} style={{background:C.redBg,border:`1px solid ${C.redBorder}`,color:C.red,borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer",fontWeight:700}}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* PHOTOS */}
+      {adminTab==="photos"&&(
+        <div className="card">
+          <h3 style={{fontWeight:800,fontSize:15,color:C.text,marginBottom:14}}>📸 Upload Member Photos</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              <div>
+                <label style={LS}>Team</label>
+                <select value={pTeam} onChange={e=>{setPTeam(e.target.value);setPMember("");}} style={IS}>
+                  <option value="">— Team —</option>
+                  {TEAMS.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={LS}>Member</label>
+                <select value={pMember} onChange={e=>setPMember(e.target.value)} style={IS} disabled={!pTeamObj}>
+                  <option value="">— Name —</option>
+                  {pTeamObj?.members.map(m=><option key={m.key} value={m.key}>{m.first} {m.last}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={LS}>Profile Photo</label>
+              <label style={{display:"flex",alignItems:"center",gap:12,cursor:"pointer",background:C.bg,border:`1.5px dashed ${C.border}`,borderRadius:12,padding:"14px 16px"}}>
+                {pFile?<img src={pFile} style={{width:56,height:56,borderRadius:"50%",objectFit:"cover"}}/>
+                      :<span style={{fontSize:28}}>📷</span>}
+                <span style={{fontSize:13,color:C.textLight,fontWeight:600}}>{pFile?"Change photo":"Upload profile photo"}</span>
+                <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>readFile(e.target.files[0],setPFile)}/>
+              </label>
+            </div>
+            <button className="btn-red" onClick={savePhoto} style={{padding:"13px",fontSize:15}}>Save Photo</button>
+            {/* Current photos grid */}
+            <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:C.textFaint,textTransform:"uppercase",letterSpacing:".1em",marginBottom:12}}>All Member Photos</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:10}}>
+                {TEAMS.flatMap(t=>t.members).map(m=>(
+                  <div key={m.key} style={{textAlign:"center"}}>
+                    <Avatar src={photos[m.key]} name={m.first} size={52} leader={m.leader}/>
+                    <div style={{fontSize:10,color:C.textMid,marginTop:4,fontWeight:600,lineHeight:1.2}}>{m.first}</div>
+                    <div style={{fontSize:9,color:C.textFaint}}>{m.last.slice(0,8)}{m.last.length>8?"…":""}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
+function App(){
+  const [tab,setTab]=useState("leaderboard");
+  const [checkins,setCheckins]=useState({});
+  const [missions,setMissions]=useState({});
+  const [photos,setPhotos]=useState({});
+  const [loading,setLoading]=useState(true);
+  const [toast,setToast]=useState(null);
+  const [expanded,setExpanded]=useState(null);
+  const [activeCP,setActiveCP]=useState("cp1");
+
+  useEffect(()=>{
+    const timeout=setTimeout(()=>setLoading(false),4000);
+    try{
+      db.ref("crc_checkins").on("value",s=>{setCheckins(s.val()||{});clearTimeout(timeout);setLoading(false);});
+      db.ref("crc_missions").on("value",s=>setMissions(s.val()||{}));
+      db.ref("crc_photos").on("value",s=>setPhotos(s.val()||{}));
+    }catch{clearTimeout(timeout);setLoading(false);}
+    return()=>{db.ref("crc_checkins").off();db.ref("crc_missions").off();db.ref("crc_photos").off();};
+  },[]);
+
+  // Get latest available CP for a member (fallback to most recent with data)
+  function getLatestData(memberKey){
+    const rec=checkins[memberKey]||{};
+    const cpOrder=["cp4","cp3","cp2","cp1"];
+    for(const c of cpOrder){ if(rec[c]) return{cp:c,data:rec[c]}; }
+    return null;
+  }
+
+  const ranked=[...TEAMS].map(t=>{
+    let health=0;
+    t.members.forEach(m=>{
+      const base=checkins[m.key]?.baseline;
+      // Use activeCP if data exists, otherwise fall back to latest available
+      const selectedData=checkins[m.key]?.[activeCP];
+      const latest=getLatestData(m.key);
+      const curr=selectedData||(latest?.data);
+      if(base&&curr){const s=calcScore(base,curr);if(s)health+=s.total;}
+    });
+    health=Math.round(health*10)/10;
+    const mission=getMissionTotal(missions,t.id);
+    return{...t,health,mission,total:health+mission};
+  }).sort((a,b)=>b.total-a.total).map((t,i)=>({...t,rank:i+1}));
+
+  const TABS=[["leaderboard","🏆","Leaderboard"],["admin","🔐","Admin"]];
+
+  if(loading) return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16,background:C.bg}}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={{width:44,height:44,border:`4px solid ${C.border}`,borderTop:`4px solid ${C.red}`,borderRadius:"50%",animation:"spin 1s linear infinite"}}/>
+      <div style={{fontSize:14,color:C.textLight,fontWeight:600}}>Loading live data...</div>
+    </div>
+  );
+
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,paddingBottom:60}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .chov{transition:box-shadow .15s,transform .15s;cursor:pointer}
+        .chov:hover{box-shadow:0 4px 20px rgba(15,23,42,.1)!important;transform:translateY(-1px)}
+        select option{background:#fff;color:#0f172a}
+        input::placeholder{color:#cbd5e1}
+        input:focus,select:focus{outline:none;border-color:#3b82f6!important;box-shadow:0 0 0 3px rgba(59,130,246,.15)!important}
+      `}</style>
+
+      {/* HEADER */}
+      <header style={{background:"linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#7f1d1d 100%)",padding:"36px 16px 30px",textAlign:"center"}}>
+        <div style={{fontSize:10,letterSpacing:".22em",fontWeight:700,color:"rgba(255,255,255,.45)",textTransform:"uppercase",marginBottom:8}}>Central Retail · Tech Division</div>
+        <h1 style={{fontSize:"clamp(22px,5vw,42px)",fontWeight:900,color:"#fff",letterSpacing:"-.02em",lineHeight:1.05}}>CRC Tech Fit Challenge 2026</h1>
+        <p style={{color:"rgba(255,255,255,.45)",marginTop:6,fontSize:13}}>60-Day · 8 Teams · 40 Participants</p>
+        <div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
+          {[
+            ["🥇 1st Team","฿20,000","#fbbf24","rgba(251,191,36,.18)"],
+            ["🥈 2nd Team","฿10,000","#e2e8f0","rgba(255,255,255,.1)"],
+            ["🏅 Top Individual","฿5,000","#86efac","rgba(134,239,172,.15)"],
+          ].map(([l,p,c,bg])=>(
+            <div key={l} style={{background:bg,border:`1px solid ${c}40`,borderRadius:12,padding:"10px 20px",textAlign:"center"}}>
+              <div style={{fontSize:10,color:c,fontWeight:700,letterSpacing:".1em",opacity:.85}}>{l}</div>
+              <div style={{fontSize:20,fontWeight:900,color:c}}>{p}</div>
+            </div>
+          ))}
+        </div>
+      </header>
+
+      {/* TABS */}
+      <div style={{background:"#fff",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"center"}}>
+        {TABS.map(([id,icon,label])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{border:"none",cursor:"pointer",fontWeight:700,fontSize:14,padding:"15px 24px",background:"transparent",color:tab===id?C.red:C.textLight,borderBottom:`3px solid ${tab===id?C.red:"transparent"}`,transition:"all .18s",fontFamily:"'Inter',sans-serif"}}>
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      <main style={{maxWidth:860,margin:"24px auto 0",padding:"0 16px"}}>
+
+        {/* LEADERBOARD */}
+        {tab==="leaderboard"&&<>
+          {/* CP selector */}
+          <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+            {CPS.filter(c=>c.id!=="baseline").map(c=>(
+              <button key={c.id} onClick={()=>setActiveCP(c.id)} style={{border:"none",cursor:"pointer",fontWeight:700,fontSize:12,padding:"8px 16px",borderRadius:20,fontFamily:"'Inter',sans-serif",transition:"all .18s",background:activeCP===c.id?C.red:"#fff",color:activeCP===c.id?"#fff":C.textLight,border:`1px solid ${activeCP===c.id?C.red:C.border}`}}>
+                {c.label} · W{c.week}
+              </button>
+            ))}
+          </div>
+
+          {/* Scoring rules */}
+          <div style={{background:"#fff",border:`1px solid ${C.border}`,borderRadius:12,padding:"12px 16px",marginBottom:14}}>
+            <div style={{fontWeight:700,color:C.textMid,fontSize:11,textTransform:"uppercase",letterSpacing:".08em",marginBottom:8}}>Scoring Rules</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6,fontSize:12}}>
+              {[["Body Fat ↓ 0.1%","+1 pt",C.green],["Body Fat ↑ 0.1%","−1 pt",C.red],["Muscle ↑ 0.1%","+1 pt",C.green],["Muscle ↓ 0.1%","−1 pt",C.red]].map(([l,v,c])=>(
+                <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 10px",background:C.bg,borderRadius:8}}>
+                  <span style={{color:C.textMid}}>{l}</span>
+                  <span style={{fontWeight:800,color:c}}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:8,fontSize:11,color:C.textFaint}}>⭐ = Team leader · Tap a team to see members · 🥇 Team 1st = ฿20k · 🥈 Team 2nd = ฿10k · 🏅 Highest individual score = ฿5k</div>
+          </div>
+
+          {/* Top individual */}
+          {(()=>{
+            const allMembers=TEAMS.flatMap(t=>t.members.map(m=>{
+              const base=checkins[m.key]?.baseline;
+              const curr=checkins[m.key]?.[activeCP];
+              const s=(base&&curr&&activeCP!=="baseline")?calcScore(base,curr):null;
+              return{...m,score:s?s.total:null};
+            })).filter(m=>m.score!=null).sort((a,b)=>b.score-a.score);
+            const top=allMembers[0];
+            if(!top)return null;
+            const teamName=TEAMS.find(t=>t.members.some(m=>m.key===top.key))?.name||"";
+            return(
+              <div style={{background:"linear-gradient(135deg,#f0fdf4,#fffbeb)",border:"1.5px solid #86efac",borderRadius:14,padding:"14px 18px",marginBottom:4,display:"flex",alignItems:"center",gap:14}}>
+                <span style={{fontSize:28}}>🏅</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,fontWeight:700,color:C.green,textTransform:"uppercase",letterSpacing:".08em",marginBottom:3}}>Top Individual · ฿5,000</div>
+                  <div style={{fontWeight:800,fontSize:15,color:C.text}}>{top.first} {top.last}</div>
+                  <div style={{fontSize:12,color:C.textLight}}>{teamName}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:22,fontWeight:900,color:C.green}}>+{top.score}</div>
+                  <div style={{fontSize:11,color:C.textFaint}}>pts</div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {ranked.map(t=>(
+              <TeamCard key={t.id} team={t} rank={t.rank}
+                healthScore={t.health} missionScore={t.mission}
+                checkins={checkins} activeCP={activeCP} photos={photos}
+                expanded={expanded===t.id}
+                onToggle={()=>setExpanded(expanded===t.id?null:t.id)}/>
+            ))}
+          </div>
+        </>}
+
+        {/* ADMIN */}
+        {tab==="admin"&&<AdminPanel checkins={checkins} missions={missions} photos={photos} toast={setToast}/>}
+
+      </main>
+
+      {toast&&<Toast msg={toast} onDone={()=>setToast(null)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
