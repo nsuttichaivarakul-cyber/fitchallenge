@@ -259,30 +259,60 @@ function MemberRow({m, checkins, activeCP, photos}){
             </div>
           )}
 
-          {/* CP Timeline mini row */}
+          {/* CP Timeline — card style like fitness challenge */}
           {timeline.length > 0 && (
-            <div style={{display:"flex", gap:4, marginTop:8, flexWrap:"wrap"}}>
-              {timeline.map((c,i) => {
-                const d = history[c.id];
-                const prev2 = i > 0 ? history[timeline[i-1].id] : base;
-                const diff = prev2 && d ? calcScore(prev2, d) : null;
-                return (
-                  <div key={c.id} style={{
-                    background: c.id===usedCP ? C.navy : C.bg,
-                    border: `1px solid ${c.id===usedCP ? C.navy : C.border}`,
-                    borderRadius:8, padding:"4px 8px", textAlign:"center", minWidth:52
-                  }}>
-                    <div style={{fontSize:9, fontWeight:700,
-                      color: c.id===usedCP ? "#fff" : C.textFaint,
-                      textTransform:"uppercase"}}>{c.label}</div>
-                    <div style={{fontSize:10, fontWeight:800,
-                      color: c.id===usedCP ? "#fff" :
-                             diff ? (diff.total>=0 ? C.green : C.red) : C.textFaint}}>
-                      {diff ? (diff.total>=0?"+":"")+diff.total.toFixed(0) : "—"}
-                    </div>
+            <div style={{marginTop:10}}>
+              <div style={{fontSize:10,fontWeight:700,color:C.textFaint,
+                textTransform:"uppercase",letterSpacing:".08em",marginBottom:6}}>
+                Check-in History
+              </div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {/* Baseline card */}
+                {base && (
+                  <div style={{background:C.bg,border:`1px solid ${C.border}`,
+                    borderRadius:10,padding:"8px 10px",minWidth:90}}>
+                    <div style={{fontSize:10,fontWeight:700,color:C.textFaint,marginBottom:4}}>Baseline</div>
+                    {base.weight&&<div style={{fontSize:11,color:C.textMid,marginBottom:2}}>⚖️ {base.weight}kg</div>}
+                    <div style={{fontSize:12,fontWeight:700,color:C.red}}>🔴 {base.fat}%</div>
+                    <div style={{fontSize:12,fontWeight:700,color:C.blue}}>🔵 {base.muscle}%</div>
                   </div>
-                );
-              })}
+                )}
+                {/* CP cards */}
+                {timeline.filter(c=>c.id!=="baseline").map((c,i)=>{
+                  const d=history[c.id];
+                  const allCPs=["baseline","cp1","cp2","cp3","cp4"];
+                  const cIdx=allCPs.indexOf(c.id);
+                  const prevId=allCPs[cIdx-1];
+                  const prevD=history[prevId]||base;
+                  const diff=prevD&&d?calcScore(prevD,d):null;
+                  const isCurrent=c.id===usedCP;
+                  return(
+                    <div key={c.id} style={{
+                      background:isCurrent?"#f0fdf4":C.bg,
+                      border:`1.5px solid ${isCurrent?"#86efac":C.border}`,
+                      borderRadius:10,padding:"8px 10px",minWidth:90
+                    }}>
+                      <div style={{fontSize:10,fontWeight:800,
+                        color:isCurrent?C.green:C.blue,marginBottom:4}}>
+                        Week {CPS.find(cp=>cp.id===c.id)?.week}
+                      </div>
+                      {d.weight&&<div style={{fontSize:11,color:C.textMid,marginBottom:2}}>⚖️ {d.weight}kg</div>}
+                      <div style={{fontSize:12,fontWeight:700,color:C.red}}>
+                        🔴 {d.fat}%
+                        {diff&&<span style={{fontSize:10,color:diff.fatD>=0?C.green:C.red,marginLeft:3}}>
+                          ({diff.fatD>=0?"-":"+"}{Math.abs(diff.fatD).toFixed(1)})
+                        </span>}
+                      </div>
+                      <div style={{fontSize:12,fontWeight:700,color:C.blue}}>
+                        🔵 {d.muscle}%
+                        {diff&&<span style={{fontSize:10,color:diff.musD>=0?C.green:C.red,marginLeft:3}}>
+                          ({diff.musD>=0?"+":"-"}{Math.abs(diff.musD).toFixed(1)})
+                        </span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -851,56 +881,35 @@ function App(){
 
             if(!allMembers.length)return null;
             const top=allMembers[0];
-            const top3=allMembers.slice(0,3);
 
             return(
-              <div style={{marginBottom:4}}>
-                {/* Top 3 individuals */}
-                {top3.map((p,i)=>{
-                  const medals=["🏅","🥈","🥉"];
-                  const isFirst=i===0;
-                  return(
-                    <div key={p.key} style={{
-                      background:isFirst?"linear-gradient(135deg,#f0fdf4,#fffbeb)":"#fff",
-                      border:`1.5px solid ${isFirst?"#86efac":C.border}`,
-                      borderRadius:14,padding:"12px 18px",marginBottom:6,
-                      display:"flex",alignItems:"center",gap:14,
-                      boxShadow:isFirst?"0 2px 8px rgba(22,163,74,.1)":"0 1px 3px rgba(0,0,0,.04)"
-                    }}>
-                      <span style={{fontSize:isFirst?28:22,flexShrink:0}}>{medals[i]}</span>
-                      <div style={{flex:1,minWidth:0}}>
-                        {isFirst&&<div style={{fontSize:11,fontWeight:700,color:C.green,
-                          textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>
-                          Top Individual · ฿5,000
-                        </div>}
-                        <div style={{fontWeight:800,fontSize:isFirst?15:14,color:C.text}}>
-                          {p.first} {p.last}
-                        </div>
-                        <div style={{fontSize:11,color:C.textLight}}>{p.teamName}</div>
-                        {/* This round vs prev */}
-                        {p.scoreRound!=null&&(
-                          <div style={{fontSize:11,fontWeight:700,marginTop:3,
-                            color:p.scoreRound>=0?C.blue:C.red}}>
-                            {p.scoreRound>=0?"+":""}{p.scoreRound.toFixed(1)} pts this round
-                          </div>
-                        )}
-                      </div>
-                      <div style={{textAlign:"right",flexShrink:0}}>
-                        <div style={{fontSize:isFirst?22:18,fontWeight:900,
-                          color:p.score>=0?C.green:C.red}}>
-                          {p.score>=0?"+":""}{p.score.toFixed(1)}
-                        </div>
-                        <div style={{fontSize:9,color:C.textFaint}}>total pts</div>
-                        {p.scoreRound!=null&&(
-                          <div style={{fontSize:10,fontWeight:700,
-                            color:p.scoreRound>=0?C.blue:C.red,marginTop:2}}>
-                            {p.scoreRound>=0?"+":""}{p.scoreRound.toFixed(1)} round
-                          </div>
-                        )}
-                      </div>
+              <div style={{background:"linear-gradient(135deg,#f0fdf4,#fffbeb)",
+                border:"1.5px solid #86efac",borderRadius:14,padding:"14px 18px",
+                marginBottom:4,display:"flex",alignItems:"center",gap:14,
+                boxShadow:"0 2px 8px rgba(22,163,74,.1)"}}>
+                <span style={{fontSize:28,flexShrink:0}}>🏅</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11,fontWeight:700,color:C.green,
+                    textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>
+                    Top Individual · ฿5,000
+                  </div>
+                  <div style={{fontWeight:800,fontSize:15,color:C.text}}>
+                    {top.first} {top.last}
+                  </div>
+                  <div style={{fontSize:11,color:C.textLight}}>{top.teamName}</div>
+                  {top.scoreRound!=null&&(
+                    <div style={{fontSize:11,fontWeight:700,marginTop:3,
+                      color:top.scoreRound>=0?C.blue:C.red}}>
+                      {top.scoreRound>=0?"+":""}{top.scoreRound.toFixed(1)} pts this round
                     </div>
-                  );
-                })}
+                  )}
+                </div>
+                <div style={{textAlign:"right",flexShrink:0}}>
+                  <div style={{fontSize:22,fontWeight:900,color:top.score>=0?C.green:C.red}}>
+                    {top.score>=0?"+":""}{top.score.toFixed(1)}
+                  </div>
+                  <div style={{fontSize:9,color:C.textFaint}}>total pts</div>
+                </div>
               </div>
             );
           })()}
